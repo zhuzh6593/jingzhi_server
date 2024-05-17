@@ -1,0 +1,57 @@
+package trigger
+
+import (
+	"context"
+	"errors"
+	"log/slog"
+	"os"
+
+	"caict.ac.cn/llm-server/builder/store/database"
+	"caict.ac.cn/llm-server/common/config"
+	"caict.ac.cn/llm-server/common/types"
+	"caict.ac.cn/llm-server/component"
+	"github.com/spf13/cobra"
+)
+
+var fixOrgDataCmd = &cobra.Command{
+	Use:   "fix-org-data",
+	Short: "scan organization and fix organization data, like init read,write and admin role for org",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		lh := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			AddSource: false,
+			Level:     slog.LevelInfo,
+		})
+		l := slog.New(lh)
+		slog.SetDefault(l)
+
+		var orgs []database.Organization
+		var err error
+		var cfg *config.Config
+		cfg, err = config.LoadConfig()
+		if err != nil {
+			return err
+		}
+		ctx := context.Background()
+		os := database.NewOrgStore()
+		orgComponent, _ := component.NewOrganizationComponent(cfg)
+
+		// get all organizations
+		orgs, err = os.Index(ctx, "")
+		for _, org := range orgs {
+			req := new(types.CreateOrgReq)
+			req.Name = org.Name
+			req.FullName = org.FullName
+			req.Username = org.User.Username
+			req.Description = org.Description
+
+			slog.Info("before create org", slog.Any("req", req))
+			_, err1 := orgComponent.FixOrgData(ctx, &org)
+			if err1 != nil {
+				err = errors.Join(err, err1)
+				slog.Error("create org has error", slog.String("error", err.Error()))
+			}
+			slog.Info("done create org", slog.String("org", req.Name))
+		}
+		return err
+	},
+}

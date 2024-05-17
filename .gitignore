@@ -1,0 +1,10 @@
+# Binaries
+bin
+.vscode
+.DS_Store
+.envrc
+
+/gitea
+/pgdata
+minio_data
+local_only

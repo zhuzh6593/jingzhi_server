@@ -1,0 +1,109 @@
+package gitea
+
+import (
+	"errors"
+	"log/slog"
+
+	"caict.ac.cn/llm-server/builder/store/database"
+	"caict.ac.cn/llm-server/common/types"
+	"caict.ac.cn/llm-server/common/utils/common"
+	"github.com/OpenCSGs/gitea-go-sdk/gitea"
+)
+
+// FixOrganization recreate organization data, ignore data duplication error
+// !should only be used for online data fixing
+func (c *Client) FixOrganization(req *types.CreateOrgReq, user database.User) error {
+	var errs error
+	orgNames := c.getTargetOrgs(req.Name)
+	for _, orgName := range orgNames {
+		_, _, err := c.giteaClient.AdminCreateOrg(
+			user.Username,
+			gitea.CreateOrgOption{
+				Name:        orgName,
+				Description: req.Description,
+				FullName:    req.FullName,
+			},
+		)
+		if err != nil {
+			errs = errors.Join(err)
+			slog.Error("fix gitea organization failed", slog.String("orgName", orgName), slog.String("user", user.Username),
+				slog.String("error", err.Error()))
+		} else {
+			slog.Info("fix gitea organization success", slog.String("orgName", req.Name), slog.String("user", user.Username))
+		}
+	}
+
+	return errs
+}
+
+func (c *Client) CreateOrganization(req *types.CreateOrgReq, user database.User) (org *database.Organization, err error) {
+	orgNames := c.getTargetOrgs(req.Name)
+	for _, orgName := range orgNames {
+		_, _, err := c.giteaClient.AdminCreateOrg(
+			user.Username,
+			gitea.CreateOrgOption{
+				Name:        orgName,
+				Description: req.Description,
+				FullName:    req.FullName,
+			},
+		)
+		if err != nil {
+			slog.Error("create gitea organization failed", slog.String("orgName", orgName), slog.String("userName", user.Username))
+			return nil, err
+		}
+	}
+
+	org = &database.Organization{
+		Name:        req.Name,
+		FullName:    req.FullName,
+		Description: req.Description,
+		User:        &user,
+		UserID:      user.ID,
+	}
+
+	return
+}
+
+func (c *Client) DeleteOrganization(name string) (err error) {
+	orgNames := c.getTargetOrgs(name)
+	for _, orgName := range orgNames {
+		_, err = c.giteaClient.DeleteOrg(orgName)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func (c *Client) UpdateOrganization(req *types.EditOrgReq, originOrg *database.Organization) (org *database.Organization, err error) {
+	orgNames := c.getTargetOrgs(req.Name)
+
+	for _, orgName := range orgNames {
+		_, err = c.giteaClient.EditOrg(
+			orgName,
+			gitea.EditOrgOption{
+				FullName:    req.FullName,
+				Description: req.Description,
+			},
+		)
+		if err != nil {
+			return
+		}
+	}
+
+	originOrg.FullName = req.FullName
+	originOrg.Description = req.Description
+
+	return originOrg, nil
+}
+
+func (c *Client) getTargetOrgs(org string) []string {
+	orgs := [4]string{
+		common.WithPrefix(org, DatasetOrgPrefix),
+		common.WithPrefix(org, ModelOrgPrefix),
+		common.WithPrefix(org, SpaceOrgPrefix),
+		common.WithPrefix(org, CodeOrgPrefix),
+	}
+	return orgs[:]
+}

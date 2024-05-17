@@ -1,0 +1,83 @@
+package start
+
+import (
+	"fmt"
+	"time"
+
+	"caict.ac.cn/llm-server/api/httpbase"
+	"caict.ac.cn/llm-server/api/router"
+	"caict.ac.cn/llm-server/builder/deploy"
+	"caict.ac.cn/llm-server/builder/store/database"
+	"caict.ac.cn/llm-server/common/config"
+	"caict.ac.cn/llm-server/docs"
+	"github.com/spf13/cobra"
+)
+
+var enableSwagger bool
+
+func init() {
+	serverCmd.Flags().BoolVar(&enableSwagger, "swagger", false, "Start swagger help docs")
+}
+
+var serverCmd = &cobra.Command{
+	Use:     "server",
+	Short:   "Start the API server",
+	Example: serverExample(),
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
+		cfg, err := config.LoadConfig()
+		if err != nil {
+			return err
+		}
+
+		enableSwagger = enableSwagger || cfg.EnableSwagger
+
+		if enableSwagger {
+			//	@securityDefinitions.apikey ApiKey
+			//	@in                         header
+			//	@name                       Authorization
+			//	@description                Bearer token
+			docs.SwaggerInfo.Title = "CSGHub Server API"
+			docs.SwaggerInfo.Description = "CSGHub Server API."
+			docs.SwaggerInfo.Version = "1.0"
+			docs.SwaggerInfo.Host = cfg.APIServer.PublicDomain
+			docs.SwaggerInfo.BasePath = "/api/v1"
+			docs.SwaggerInfo.Schemes = []string{"http", "https"}
+		}
+
+		// Check APIToken length
+		if len(cfg.APIToken) < 128 {
+			return fmt.Errorf("API token length is less than 128, please check")
+		}
+		dbConfig := database.DBConfig{
+			Dialect: database.DatabaseDialect(cfg.Database.Driver),
+			DSN:     cfg.Database.DSN,
+		}
+		database.InitDB(dbConfig)
+		deploy.Init(deploy.DeployConfig{
+			ImageBuilderURL:    cfg.Space.BuilderEndpoint,
+			ImageRunnerURL:     cfg.Space.RunnerEndpoint,
+			MonitorInterval:    10 * time.Second,
+			InternalRootDomain: cfg.Space.InternalRootDomain,
+		})
+		r, err := router.NewRouter(cfg, enableSwagger)
+		if err != nil {
+			return fmt.Errorf("failed to init router: %w", err)
+		}
+		server := httpbase.NewGracefulServer(
+			httpbase.GraceServerOpt{
+				Port: cfg.APIServer.Port,
+			},
+			r,
+		)
+		server.Run()
+
+		return nil
+	},
+}
+
+func serverExample() string {
+	return `
+# for development
+csghub-server start server
+`
+}
