@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"log/slog"
 
-	"caict.ac.cn/llm-server/builder/git"
-	"caict.ac.cn/llm-server/builder/git/gitserver"
-	"caict.ac.cn/llm-server/builder/store/database"
-	"caict.ac.cn/llm-server/common/config"
-	"caict.ac.cn/llm-server/common/types"
+	"opencsg.com/csghub-server/builder/git"
+	"opencsg.com/csghub-server/builder/git/gitserver"
+	"opencsg.com/csghub-server/builder/store/database"
+	"opencsg.com/csghub-server/common/config"
+	"opencsg.com/csghub-server/common/types"
 )
 
 func NewSSHKeyComponent(config *config.Config) (*SSHKeyComponent, error) {

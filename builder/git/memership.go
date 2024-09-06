@@ -3,9 +3,9 @@ package git
 import (
 	"errors"
 
-	"caict.ac.cn/llm-server/builder/git/membership"
-	"caict.ac.cn/llm-server/builder/git/membership/gitea"
-	"caict.ac.cn/llm-server/common/config"
+	"opencsg.com/csghub-server/builder/git/membership"
+	"opencsg.com/csghub-server/builder/git/membership/gitea"
+	"opencsg.com/csghub-server/common/config"
 )
 
 func NewMemberShip(config config.Config) (membership.GitMemerShip, error) {

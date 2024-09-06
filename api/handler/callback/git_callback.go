@@ -4,11 +4,11 @@ import (
 	"log/slog"
 	"net/http"
 
-	"caict.ac.cn/llm-server/api/httpbase"
-	"caict.ac.cn/llm-server/common/config"
-	"caict.ac.cn/llm-server/common/types"
-	component "caict.ac.cn/llm-server/component/callback"
 	"github.com/gin-gonic/gin"
+	"opencsg.com/csghub-server/api/httpbase"
+	"opencsg.com/csghub-server/common/config"
+	"opencsg.com/csghub-server/common/types"
+	component "opencsg.com/csghub-server/component/callback"
 )
 
 type GitCallbackHandler struct {

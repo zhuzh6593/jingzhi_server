@@ -6,11 +6,11 @@ import (
 	"log/slog"
 	"os"
 
-	"caict.ac.cn/llm-server/builder/store/database"
-	"caict.ac.cn/llm-server/common/config"
-	"caict.ac.cn/llm-server/common/types"
-	"caict.ac.cn/llm-server/component"
 	"github.com/spf13/cobra"
+	"opencsg.com/csghub-server/builder/store/database"
+	"opencsg.com/csghub-server/common/config"
+	"opencsg.com/csghub-server/common/types"
+	"opencsg.com/csghub-server/user/component"
 )
 
 var fixOrgDataCmd = &cobra.Command{
@@ -36,11 +36,11 @@ var fixOrgDataCmd = &cobra.Command{
 		orgComponent, _ := component.NewOrganizationComponent(cfg)
 
 		// get all organizations
-		orgs, err = os.Index(ctx, "")
+		orgs, err = os.GetUserOwnOrgs(ctx, "")
 		for _, org := range orgs {
 			req := new(types.CreateOrgReq)
 			req.Name = org.Name
-			req.FullName = org.FullName
+			req.Nickname = org.Nickname
 			req.Username = org.User.Username
 			req.Description = org.Description
 

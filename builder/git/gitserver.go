@@ -3,9 +3,9 @@ package git
 import (
 	"errors"
 
-	"caict.ac.cn/llm-server/builder/git/gitserver"
-	"caict.ac.cn/llm-server/builder/git/gitserver/gitea"
-	"caict.ac.cn/llm-server/common/config"
+	"opencsg.com/csghub-server/builder/git/gitserver"
+	"opencsg.com/csghub-server/builder/git/gitserver/gitea"
+	"opencsg.com/csghub-server/common/config"
 )
 
 func NewGitServer(config *config.Config) (gitserver.GitServer, error) {

@@ -4,7 +4,7 @@
 | --- | --- | --- |
 | STARHUB_SERVER_INSTANCE_ID | none | A unique instance ID used to identify multiple instances during deployment |
 | STARHUB_SERVER_ENABLE_SWAGGER | false | Whether to enable Swagger documentation service |
-| STARHUB_SERVER_API_TOKEN | none | API token for identity verification with the frontend, it needs to be 128 characters long |
+| STARHUB_SERVER_API_TOKEN | 0c11e6e4f2054444374ba3f0b70de4145935a7312289d404814cd5907c6aa93cc65cd35dbf94e04c13a3dedbf51f1694de84240c8acb7238b54a2c3ac8e87c59 | API token for identity verification with the frontend, it needs to be 128 characters long |
 | STARHUB_SERVER_SERVER_PORT | 8080 | Port on which CSGhub Server listens after startup |
 | STARHUB_SERVER_SERVER_EXTERNAL_HOST | localhost | Host after CSGhub Server startup |
 | STARHUB_SERVER_SERVER_DOCS_HOST | `http://localhost:6636` | Host after Swagger startup |

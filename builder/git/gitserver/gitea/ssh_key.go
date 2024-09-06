@@ -1,9 +1,9 @@
 package gitea
 
 import (
-	"caict.ac.cn/llm-server/builder/store/database"
-	"caict.ac.cn/llm-server/common/types"
 	"github.com/OpenCSGs/gitea-go-sdk/gitea"
+	"opencsg.com/csghub-server/builder/store/database"
+	"opencsg.com/csghub-server/common/types"
 )
 
 func (c *Client) CreateSSHKey(req *types.CreateSSHKeyRequest) (token *database.SSHKey, err error) {

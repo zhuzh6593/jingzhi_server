@@ -3,10 +3,10 @@ package gitea
 import (
 	"context"
 
-	"caict.ac.cn/llm-server/builder/git/gitserver"
-	"caict.ac.cn/llm-server/common/types"
-	"caict.ac.cn/llm-server/common/utils/common"
 	"github.com/OpenCSGs/gitea-go-sdk/gitea"
+	"opencsg.com/csghub-server/builder/git/gitserver"
+	"opencsg.com/csghub-server/common/types"
+	"opencsg.com/csghub-server/common/utils/common"
 )
 
 func (c *Client) GetRepoBranches(ctx context.Context, req gitserver.GetBranchesReq) ([]types.Branch, error) {

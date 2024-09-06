@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	"caict.ac.cn/llm-server/common/config"
+	"opencsg.com/csghub-server/common/config"
 )
 
 func Test_splitTasks(t *testing.T) {

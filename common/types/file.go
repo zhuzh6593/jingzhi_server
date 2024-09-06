@@ -19,24 +19,26 @@ type File struct {
 }
 
 type CreateFileReq struct {
-	Username  string `json:"username" form:"username"`
-	Email     string `json:"email" form:"email"`
+	//will use login username, ignore username from http request body
+	Username  string `json:"-"`
+	Email     string `json:"-"`
 	Message   string `json:"message" form:"message"`
 	Branch    string `json:"branch" form:"branch"`
 	Content   string `json:"content"`
 	NewBranch string `json:"new_branch"`
 
-	NameSpace string `json:"-"`
-	Name      string `json:"-"`
-	FilePath  string `json:"-" form:"file_path"`
-	RepoType  RepositoryType
+	NameSpace string         `json:"-"`
+	Name      string         `json:"-"`
+	FilePath  string         `json:"-"`
+	RepoType  RepositoryType `json:"-"`
 }
 
 type CreateFileResp struct{}
 
 type UpdateFileReq struct {
-	Username   string `json:"username"`
-	Email      string `json:"email"`
+	//will use login username, ignore username from http request body
+	Username   string `json:"-"`
+	Email      string `json:"-"`
 	Message    string `json:"message"`
 	Branch     string `json:"branch"`
 	Content    string `json:"content"`
@@ -111,4 +113,11 @@ type CreateFileParams struct {
 	Namespace string `json:"namespace"`
 	Name      string `json:"name"`
 	FilePath  string `json:"file_path"`
+}
+
+type GetAllFilesReq struct {
+	Namespace   string         `json:"namespace"`
+	Name        string         `json:"name"`
+	RepoType    RepositoryType `json:"repo_type"`
+	CurrentUser string         `json:"current_user"`
 }

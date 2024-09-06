@@ -1,14 +1,24 @@
 package types
 
-import "github.com/golang-jwt/jwt/v5"
+import (
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+)
 
 type CreateJWTReq struct {
+	UUID          string   `json:"uuid" binding:"required"`
 	CurrentUser   string   `json:"current_user" binding:"required"`
-	Organizations []string `json:"organizations"`
+	Organizations []string `json:"-"`
+}
+
+type CreateJWTResp struct {
+	ExpireAt time.Time `json:"expire_at"`
+	Token    string    `json:"token"`
 }
 
 type JWTClaims struct {
-	CurrentUser   string   `json:"current_user"`
-	Organizations []string `json:"organizations"`
+	UUID        string `json:"uuid"`
+	CurrentUser string `json:"current_user"`
 	jwt.RegisteredClaims
 }

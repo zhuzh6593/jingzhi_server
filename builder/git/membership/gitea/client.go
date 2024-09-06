@@ -11,9 +11,9 @@ import (
 	"log/slog"
 	"net/http"
 
-	"caict.ac.cn/llm-server/builder/store/database"
-	"caict.ac.cn/llm-server/common/config"
 	"github.com/OpenCSGs/gitea-go-sdk/gitea"
+	"opencsg.com/csghub-server/builder/store/database"
+	"opencsg.com/csghub-server/common/config"
 )
 
 const (
@@ -61,7 +61,7 @@ func NewClient(config *config.Config) (client *Client, err error) {
 
 func findOrCreateAccessToken(ctx context.Context, config *config.Config) (*database.GitServerAccessToken, error) {
 	gs := database.NewGitServerAccessTokenStore()
-	tokens, err := gs.Index(ctx)
+	tokens, err := gs.FindByType(ctx, "git")
 	if err != nil {
 		slog.Error("Fail to get git server access token from database", slog.String("error: ", err.Error()))
 		return nil, err
@@ -96,7 +96,7 @@ func encodeCredentials(username, password string) string {
 func generateAccessTokenFromGitea(config *config.Config) (string, error) {
 	username := config.GitServer.Username
 	password := config.GitServer.Password
-	giteaUrl := fmt.Sprintf("%s/api/v1/users/%s/tokens", config.GitServer.URL, username)
+	giteaUrl := fmt.Sprintf("%s/api/v1/users/%s/tokens", config.GitServer.Host, username)
 	authHeader := encodeCredentials(username, password)
 	data := map[string]any{
 		"name": "access_token",

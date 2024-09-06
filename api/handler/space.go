@@ -8,13 +8,12 @@ import (
 	"slices"
 	"time"
 
-	"caict.ac.cn/llm-server/api/httpbase"
-	"caict.ac.cn/llm-server/builder/proxy"
-	"caict.ac.cn/llm-server/common/config"
-	"caict.ac.cn/llm-server/common/types"
-	"caict.ac.cn/llm-server/common/utils/common"
-	"caict.ac.cn/llm-server/component"
 	"github.com/gin-gonic/gin"
+	"opencsg.com/csghub-server/api/httpbase"
+	"opencsg.com/csghub-server/common/config"
+	"opencsg.com/csghub-server/common/types"
+	"opencsg.com/csghub-server/common/utils/common"
+	"opencsg.com/csghub-server/component"
 )
 
 func NewSpaceHandler(config *config.Config) (*SpaceHandler, error) {
@@ -23,13 +22,14 @@ func NewSpaceHandler(config *config.Config) (*SpaceHandler, error) {
 		return nil, err
 	}
 	return &SpaceHandler{
-		c: sc,
+		c:  sc,
+		sc: component.NewSensitiveComponent(config),
 	}, nil
 }
 
 type SpaceHandler struct {
-	c      *component.SpaceComponent
-	rproxy *proxy.ReverseProxy
+	c  *component.SpaceComponent
+	sc component.SensitiveChecker
 }
 
 // GetAllSpaces   godoc
@@ -39,31 +39,46 @@ type SpaceHandler struct {
 // @Tags         Space
 // @Accept       json
 // @Produce      json
-// @Param        per query int false "per" default(20)data
-// @Param        page query int false "per page" default(1)
 // @Param        current_user query string false "current user"
 // @Param        search query string false "search text"
+// @Param        task_tag query string false "filter by task tag"
+// @Param        framework_tag query string false "filter by framework tag"
+// @Param        license_tag query string false "filter by license tag"
+// @Param        language_tag query string false "filter by language tag"
 // @Param        sort query string false "sort by"
+// @Param        source query string false "source" Enums(opencsg, huggingface, local)
+// @Param        per query int false "per" default(20)
+// @Param        page query int false "per page" default(1)
 // @Success      200  {object}  types.ResponseWithTotal{data=[]types.Space,total=int} "OK"
 // @Failure      400  {object}  types.APIBadRequest "Bad request"
 // @Failure      500  {object}  types.APIInternalServerError "Internal server error"
 // @Router       /spaces [get]
 func (h *SpaceHandler) Index(ctx *gin.Context) {
-	username := ctx.Query("current_user")
+	filter := new(types.RepoFilter)
+	filter.Tags = parseTagReqs(ctx)
+	filter.Username = httpbase.GetCurrentUser(ctx)
 	per, page, err := common.GetPerAndPageFromContext(ctx)
 	if err != nil {
 		slog.Error("Bad request format", "error", err)
 		httpbase.BadRequest(ctx, err.Error())
 		return
 	}
-	search, sort := getFilterFromContext(ctx)
-	if !slices.Contains[[]string](Sorts, sort) {
+	filter = getFilterFromContext(ctx, filter)
+	if !slices.Contains[[]string](Sorts, filter.Sort) {
 		msg := fmt.Sprintf("sort parameter must be one of %v", Sorts)
 		slog.Error("Bad request format,", slog.String("error", msg))
 		httpbase.BadRequest(ctx, msg)
 		return
 	}
-	spaces, total, err := h.c.Index(ctx, username, search, sort, per, page)
+
+	if filter.Source != "" && !slices.Contains[[]string](Sources, filter.Source) {
+		msg := fmt.Sprintf("source parameter must be one of %v", Sources)
+		slog.Error("Bad request format,", slog.String("error", msg))
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": msg})
+		return
+	}
+
+	spaces, total, err := h.c.Index(ctx, filter, per, page)
 	if err != nil {
 		slog.Error("Failed to get spaces", slog.Any("error", err))
 		httpbase.ServerError(ctx, err)
@@ -93,19 +108,21 @@ func (h *SpaceHandler) Index(ctx *gin.Context) {
 func (h *SpaceHandler) Show(ctx *gin.Context) {
 	namespace, name, err := common.GetNamespaceAndNameFromContext(ctx)
 	if err != nil {
-		slog.Error("Bad request format", "error", err)
 		httpbase.BadRequest(ctx, err.Error())
 		return
 	}
-	currentUser := ctx.Query("current_user")
+	currentUser := httpbase.GetCurrentUser(ctx)
 	detail, err := h.c.Show(ctx, namespace, name, currentUser)
 	if err != nil {
+		if errors.Is(err, component.ErrUnauthorized) {
+			httpbase.UnauthorizedError(ctx, err)
+			return
+		}
 		slog.Error("Failed to get space detail", slog.Any("error", err))
 		httpbase.ServerError(ctx, err)
 		return
 	}
 
-	slog.Info("Get space succeed", slog.String("space", name))
 	httpbase.OK(ctx, detail)
 }
 
@@ -116,18 +133,31 @@ func (h *SpaceHandler) Show(ctx *gin.Context) {
 // @Tags         Space
 // @Accept       json
 // @Produce      json
+// @Param        current_user query string true "current_user"
 // @Param        body body types.CreateSpaceReq true "body"
 // @Success      200  {object}  types.Response{data=types.Space} "OK"
 // @Failure      400  {object}  types.APIBadRequest "Bad request"
 // @Failure      500  {object}  types.APIInternalServerError "Internal server error"
 // @Router       /spaces [post]
 func (h *SpaceHandler) Create(ctx *gin.Context) {
+	currentUser := httpbase.GetCurrentUser(ctx)
+	if currentUser == "" {
+		httpbase.UnauthorizedError(ctx, errors.New("user not found, please login first"))
+		return
+	}
 	var req types.CreateSpaceReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		slog.Error("Bad request format", "error", err)
 		httpbase.BadRequest(ctx, err.Error())
 		return
 	}
+	_, err := h.sc.CheckRequest(ctx, &req)
+	if err != nil {
+		slog.Error("failed to check sensitive request", slog.Any("error", err))
+		httpbase.BadRequest(ctx, fmt.Errorf("sensitive check failed: %w", err).Error())
+		return
+	}
+	req.Username = currentUser
 
 	space, err := h.c.Create(ctx, req)
 	if err != nil {
@@ -148,18 +178,31 @@ func (h *SpaceHandler) Create(ctx *gin.Context) {
 // @Produce      json
 // @Param        namespace path string true "namespace"
 // @Param        name path string true "name"
+// @Param        current_user query string true "current_user"
 // @Param        body body types.UpdateSpaceReq true "body"
 // @Success      200  {object}  types.Response{data=types.Space} "OK"
 // @Failure      400  {object}  types.APIBadRequest "Bad request"
 // @Failure      500  {object}  types.APIInternalServerError "Internal server error"
 // @Router       /spaces/{namespace}/{name} [put]
 func (h *SpaceHandler) Update(ctx *gin.Context) {
+	currentUser := httpbase.GetCurrentUser(ctx)
+	if currentUser == "" {
+		httpbase.UnauthorizedError(ctx, errors.New("user not found, please login first"))
+		return
+	}
 	var req *types.UpdateSpaceReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		slog.Error("Bad request format", "error", err)
 		httpbase.BadRequest(ctx, err.Error())
 		return
 	}
+	_, err := h.sc.CheckRequest(ctx, req)
+	if err != nil {
+		slog.Error("failed to check sensitive request", slog.Any("error", err))
+		httpbase.BadRequest(ctx, fmt.Errorf("sensitive check failed: %w", err).Error())
+		return
+	}
+	req.Username = currentUser
 
 	namespace, name, err := common.GetNamespaceAndNameFromContext(ctx)
 	if err != nil {
@@ -196,13 +239,17 @@ func (h *SpaceHandler) Update(ctx *gin.Context) {
 // @Failure      500  {object}  types.APIInternalServerError "Internal server error"
 // @Router       /spaces/{namespace}/{name} [delete]
 func (h *SpaceHandler) Delete(ctx *gin.Context) {
+	currentUser := httpbase.GetCurrentUser(ctx)
+	if currentUser == "" {
+		httpbase.UnauthorizedError(ctx, errors.New("user not found, please login first"))
+		return
+	}
 	namespace, name, err := common.GetNamespaceAndNameFromContext(ctx)
 	if err != nil {
 		slog.Error("Bad request format", "error", err)
 		httpbase.BadRequest(ctx, err.Error())
 		return
 	}
-	currentUser := ctx.Query("current_user")
 	err = h.c.Delete(ctx, namespace, name, currentUser)
 	if err != nil {
 		slog.Error("Failed to delete space", slog.Any("error", err))
@@ -221,17 +268,36 @@ func (h *SpaceHandler) Delete(ctx *gin.Context) {
 // @Produce      json
 // @Param        namespace path string true "namespace"
 // @Param        name path string true "name"
+// @Param        current_user query string true "current_user"
+// @Success      200  {object}  string "OK"
 // @Failure      400  {object}  types.APIBadRequest "Bad request"
 // @Failure      500  {object}  types.APIInternalServerError "Internal server error"
 // @Router       /spaces/{namespace}/{name}/run [post]
 func (h *SpaceHandler) Run(ctx *gin.Context) {
+	currentUser := httpbase.GetCurrentUser(ctx)
+	if currentUser == "" {
+		httpbase.UnauthorizedError(ctx, errors.New("user not found, please login first"))
+		return
+	}
 	namespace, name, err := common.GetNamespaceAndNameFromContext(ctx)
 	if err != nil {
 		slog.Error("failed to get namespace from context", "error", err)
 		httpbase.BadRequest(ctx, err.Error())
 		return
 	}
-	deployID, err := h.c.Deploy(ctx, namespace, name)
+	allow, err := h.c.AllowAdminAccess(ctx, types.SpaceRepo, namespace, name, currentUser)
+	if err != nil {
+		slog.Error("failed to check user permission", "error", err)
+		httpbase.ServerError(ctx, errors.New("failed to check user permission"))
+		return
+	}
+	if !allow {
+		slog.Info("user not allowed to run space", slog.String("namespace", namespace),
+			slog.String("name", name), slog.Any("username", currentUser))
+		httpbase.UnauthorizedError(ctx, errors.New("user not allowed to run sapce"))
+		return
+	}
+	deployID, err := h.c.Deploy(ctx, namespace, name, currentUser)
 	if err != nil {
 		slog.Error("failed to deploy space", slog.String("namespace", namespace),
 			slog.String("name", name), slog.Any("error", err))
@@ -281,16 +347,35 @@ func (h *SpaceHandler) Wakeup(ctx *gin.Context) {
 // @Produce      json
 // @Param        namespace path string true "namespace"
 // @Param        name path string true "name"
+// @Param        current_user query string true "current_user"
 // @Failure      400  {object}  types.APIBadRequest "Bad request"
 // @Failure      500  {object}  types.APIInternalServerError "Internal server error"
 // @Router       /spaces/{namespace}/{name}/stop [post]
 func (h *SpaceHandler) Stop(ctx *gin.Context) {
+	currentUser := httpbase.GetCurrentUser(ctx)
+	if currentUser == "" {
+		httpbase.UnauthorizedError(ctx, errors.New("user not found, please login first"))
+		return
+	}
 	namespace, name, err := common.GetNamespaceAndNameFromContext(ctx)
 	if err != nil {
 		slog.Error("failed to get namespace from context", "error", err)
 		httpbase.BadRequest(ctx, err.Error())
 		return
 	}
+	allow, err := h.c.AllowAdminAccess(ctx, types.SpaceRepo, namespace, name, currentUser)
+	if err != nil {
+		slog.Error("failed to check user permission", "error", err)
+		httpbase.ServerError(ctx, errors.New("failed to check user permission"))
+		return
+	}
+	if !allow {
+		slog.Info("user not allowed to stop space", slog.String("namespace", namespace),
+			slog.String("name", name), slog.Any("username", currentUser))
+		httpbase.UnauthorizedError(ctx, errors.New("user not allowed to stop sapce"))
+		return
+	}
+
 	err = h.c.Stop(ctx, namespace, name)
 	if err != nil {
 		slog.Error("failed to stop space", slog.String("namespace", namespace),
@@ -299,7 +384,7 @@ func (h *SpaceHandler) Stop(ctx *gin.Context) {
 		return
 	}
 
-	slog.Info("stop space sucess", slog.String("namespace", namespace),
+	slog.Info("stop space success", slog.String("namespace", namespace),
 		slog.String("name", name))
 	httpbase.OK(ctx, nil)
 }
@@ -312,6 +397,7 @@ func (h *SpaceHandler) Stop(ctx *gin.Context) {
 // @Produce      json
 // @Param        namespace path string true "namespace"
 // @Param        name path string true "name"
+// @Param        current_user query string true "current_user"
 // @Failure      400  {object}  types.APIBadRequest "Bad request"
 // @Failure      500  {object}  types.APIInternalServerError "Internal server error"
 // @Router       /spaces/{namespace}/{name}/status [get]
@@ -328,14 +414,8 @@ func (h *SpaceHandler) Status(ctx *gin.Context) {
 		return
 	}
 
-	var allow bool
-	username, exists := ctx.Get("currentUser")
-	if exists {
-		allow, err = h.c.AllowReadAccess(ctx, namespace, name, username.(string))
-	} else {
-		allow, err = h.c.AllowReadAccess(ctx, namespace, name, "")
-	}
-
+	currentUser := httpbase.GetCurrentUser(ctx)
+	allow, err := h.c.AllowReadAccess(ctx, types.SpaceRepo, namespace, name, currentUser)
 	if err != nil {
 		slog.Error("failed to check user permission", "error", err)
 		httpbase.ServerError(ctx, errors.New("failed to check user permission"))
@@ -343,8 +423,8 @@ func (h *SpaceHandler) Status(ctx *gin.Context) {
 	}
 
 	if !allow {
-		slog.Info("user not allowed to query sapce status", slog.String("namespace", namespace),
-			slog.String("name", name), slog.Any("username", username))
+		slog.Info("user not allowed to query space status", slog.String("namespace", namespace),
+			slog.String("name", name), slog.Any("username", currentUser))
 	}
 
 	ctx.Writer.Header().Set("Content-Type", "text/event-stream")
@@ -352,16 +432,18 @@ func (h *SpaceHandler) Status(ctx *gin.Context) {
 	ctx.Writer.Header().Set("Connection", "keep-alive")
 	ctx.Writer.Header().Set("Transfer-Encoding", "chunked")
 
-	// 创建一个通知channel以监测客户端是否已经断开连接
-	closeNotify := ctx.Writer.CloseNotify()
+	ctx.Writer.WriteHeader(http.StatusOK)
+	ctx.Writer.Flush()
 
 	for {
 		select {
-		case <-closeNotify:
+		case <-ctx.Request.Context().Done():
+			slog.Info("space handler status request context done", slog.Any("error", ctx.Request.Context().Err()))
 			return
 		default:
 			time.Sleep(time.Second * 5)
-			_, status, err := h.c.Status(ctx, namespace, name)
+			//user http request context instead of gin context, so that server knows the life cycle of the request
+			_, status, err := h.c.Status(ctx.Request.Context(), namespace, name)
 			if err != nil {
 				slog.Error("failed to get space status", slog.Any("error", err), slog.String("namespace", namespace),
 					slog.String("name", name))
@@ -380,12 +462,13 @@ func (h *SpaceHandler) status(ctx *gin.Context) {
 	ctx.Writer.Header().Set("Connection", "keep-alive")
 	ctx.Writer.Header().Set("Transfer-Encoding", "chunked")
 
-	// 创建一个通知channel以监测客户端是否已经断开连接
-	closeNotify := ctx.Writer.CloseNotify()
+	ctx.Writer.WriteHeader(http.StatusOK)
+	ctx.Writer.Flush()
 
 	for {
 		select {
-		case <-closeNotify:
+		case <-ctx.Request.Context().Done():
+			slog.Info("space handler status request context done", slog.Any("error", ctx.Request.Context().Err()))
 			return
 		default:
 			time.Sleep(time.Second * 5)
@@ -412,6 +495,7 @@ func (h *SpaceHandler) status(ctx *gin.Context) {
 // @Produce      json
 // @Param        namespace path string true "namespace"
 // @Param        name path string true "name"
+// @Param        current_user query string true "current_user"
 // @Failure      400  {object}  types.APIBadRequest "Bad request"
 // @Failure      500  {object}  types.APIInternalServerError "Internal server error"
 // @Router       /spaces/{namespace}/{name}/logs [get]
@@ -427,14 +511,8 @@ func (h *SpaceHandler) Logs(ctx *gin.Context) {
 		return
 	}
 
-	var allow bool
-	username, exists := ctx.Get("currentUser")
-	if exists {
-		allow, err = h.c.AllowReadAccess(ctx, namespace, name, username.(string))
-	} else {
-		allow, err = h.c.AllowReadAccess(ctx, namespace, name, "")
-	}
-
+	currentUser := httpbase.GetCurrentUser(ctx)
+	allow, err := h.c.AllowReadAccess(ctx, types.SpaceRepo, namespace, name, currentUser)
 	if err != nil {
 		slog.Error("failed to check user permission", "error", err)
 		httpbase.ServerError(ctx, errors.New("failed to check user permission"))
@@ -442,8 +520,10 @@ func (h *SpaceHandler) Logs(ctx *gin.Context) {
 	}
 
 	if !allow {
-		slog.Info("user not allowed to query sapce status", slog.String("namespace", namespace),
-			slog.String("name", name), slog.Any("username", username))
+		slog.Info("user not allowed to read sapce logs", slog.String("namespace", namespace),
+			slog.String("name", name), slog.Any("username", currentUser))
+		httpbase.UnauthorizedError(ctx, errors.New("user not allowed to read sapce logs"))
+		return
 	}
 
 	ctx.Writer.Header().Set("Content-Type", "text/event-stream")
@@ -451,21 +531,26 @@ func (h *SpaceHandler) Logs(ctx *gin.Context) {
 	ctx.Writer.Header().Set("Connection", "keep-alive")
 	ctx.Writer.Header().Set("Transfer-Encoding", "chunked")
 
-	logReader, err := h.c.Logs(ctx, namespace, name)
+	//user http request context instead of gin context, so that server knows the life cycle of the request
+	logReader, err := h.c.Logs(ctx.Request.Context(), namespace, name)
 	if err != nil {
 		httpbase.ServerError(ctx, err)
 		return
 	}
-	closeNotify := ctx.Writer.CloseNotify()
 
-	type logContent struct {
-		Type    string `json:"type"`
-		Content string `json:"content"`
+	if logReader.RunLog() == nil && logReader.BuildLog() == nil {
+		httpbase.ServerError(ctx, errors.New("don't find any space deploy log"))
+		return
 	}
+
+	//to quickly respond the http request
+	ctx.Writer.WriteHeader(http.StatusOK)
+	ctx.Writer.Flush()
 
 	for {
 		select {
-		case <-closeNotify:
+		case <-ctx.Request.Context().Done():
+			slog.Info("space handler logs request context done", slog.Any("error", ctx.Request.Context().Err()))
 			return
 		case data, ok := <-logReader.BuildLog():
 			if ok {
@@ -487,12 +572,9 @@ func (h *SpaceHandler) testLogs(ctx *gin.Context) {
 	ctx.Writer.Header().Set("Connection", "keep-alive")
 	ctx.Writer.Header().Set("Transfer-Encoding", "chunked")
 
-	// watch client connection
-	closeNotify := ctx.Writer.CloseNotify()
-
 	for {
 		select {
-		case <-closeNotify:
+		case <-ctx.Request.Context().Done():
 			return
 		default:
 			ctx.SSEvent("Build", "test build log message")
@@ -502,213 +584,3 @@ func (h *SpaceHandler) testLogs(ctx *gin.Context) {
 		time.Sleep(time.Second * 5)
 	}
 }
-
-// CreateSpaceFile godoc
-// @Security     ApiKey
-// @Summary      Create space file
-// @Description  create space file
-// @Tags         Space
-// @Accept       json
-// @Produce      json
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Param        file_path path string true "file_path"
-// @Param        body body types.CreateFileReq true "body"
-// @Success      200  {object}  types.Response{data=types.CreateFileResp} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /spaces/{namespace}/{name}/raw/{file_path} [post]
-
-// UpdateSpaceFile godoc
-// @Security     ApiKey
-// @Summary      Update code file
-// @Description  update code file
-// @Tags         Space
-// @Accept       json
-// @Produce      json
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Param        file_path path string true "file_path"
-// @Param        body body types.UpdateFileReq true "body"
-// @Success      200  {object}  types.Response{data=types.UpdateFileResp} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /spaces/{namespace}/{name}/raw/{file_path} [put]
-
-// GetSpaceCommits godoc
-// @Security     ApiKey
-// @Summary      Get space commits
-// @Description  get space commits
-// @Tags         Space
-// @Accept       json
-// @Produce      json
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Param        ref query string false "ref"
-// @Success      200  {object}  types.Response{data=[]types.Commit} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /spaces/{namespace}/{name}/commits [get]
-
-// GetSpaceLastCommit godoc
-// @Security     ApiKey
-// @Summary      Get space last commit
-// @Description  get space last commit
-// @Tags         Space
-// @Accept       json
-// @Produce      json
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Param        ref query string false "ref"
-// @Success      200  {object}  types.Response{data=types.Commit} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /spaces/{namespace}/{name}/last_commit [get]
-
-// GetSpaceFileRaw godoc
-// @Security     ApiKey
-// @Summary      Get space file raw
-// @Description  get space file raw
-// @Tags         Space
-// @Accept       json
-// @Produce      json
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Param        file_path path string true "file_path"
-// @Param        ref query string false "ref"
-// @Success      200  {object}  types.Response{data=types.Commit} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /spaces/{namespace}/{name}/raw/{file_path} [get]
-
-// GetSpaceFileInfo godoc
-// @Security     ApiKey
-// @Summary      Get space file info
-// @Description  get space file info
-// @Tags         Space
-// @Accept       json
-// @Produce      json
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Param        file_path path string true "file_path"
-// @Param        ref query string false "ref"
-// @Success      200  {object}  types.Response{data=types.Commit} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /spaces/{namespace}/{name}/blob/{file_path} [get]
-
-// DownloadSpaceFile godoc
-// @Security     ApiKey
-// @Summary      Download space file
-// @Description  download space file
-// @Tags         Space
-// @Accept       json
-// @Produce      json
-// @Produce      octet-stream
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Param        file_path path string true "file_path"
-// @Param        lfs query bool false "lfs"
-// @Param        ref query string false "ref"
-// @Param        save_as query string false "name of download file"
-// @Success      200  {object}  types.Response{data=string} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /spaces/{namespace}/{name}/download/{file_path} [get]
-
-// GetSpaceBranches godoc
-// @Security     ApiKey
-// @Summary      Get space branches
-// @Description  get space branches
-// @Tags         Space
-// @Accept       json
-// @Produce      json
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @param        per query int false "per" default(20)
-// @Param        page query int false "page" default(1)
-// @Success      200  {object}  types.Response{data=[]types.Branch} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /spaces/{namespace}/{name}/branches [get]
-
-// GetSpaceTags godoc
-// @Security     ApiKey
-// @Summary      Get space tags
-// @Description  get space tags
-// @Tags         Space
-// @Accept       json
-// @Produce      json
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Success      200  {object}  types.Response{data=[]types.Branch} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /spaces/{namespace}/{name}/tags [get]
-
-// GetSpaceFileTree godoc
-// @Security     ApiKey
-// @Summary      Get space file tree
-// @Description  get space file tree
-// @Tags         Space
-// @Accept       json
-// @Produce      json
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Param        ref query string false "ref"
-// @Success      200  {object}  types.Response{data=[]types.File} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /spaces/{namespace}/{name}/tree [get]
-
-// UpdateSpaceDownloads godoc
-// @Security     ApiKey
-// @Summary      Update space downloads
-// @Description  update space downloads
-// @Tags         Space
-// @Accept       json
-// @Produce      json
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Param        body body types.UpdateDownloadsReq true "body"
-// @Success      200  {object}  types.Response{data=[]types.File} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /spaces/{namespace}/{name}/update_downloads [post]
-
-// UploadSpaceFile godoc
-// @Security     ApiKey
-// @Summary      Create space file
-// @Description  upload space file to create or update a file in space repository
-// @Tags         Space
-// @Accept       json
-// @Produce      json
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Param        file_path formData string true "file_path"
-// @Param        file formData file true "file"
-// @Param        email formData string true "email"
-// @Param        message formData string true "message"
-// @Param        branch formData string false "branch"
-// @Param        username formData string true "username"
-// @Success      200  {object}  types.Response{data=types.CreateFileResp} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /spaces/{namespace}/{name}/upload_file [post]
-
-// DownloadSpaceFile godoc
-// @Security     ApiKey
-// @Summary      Download space file
-// @Description  download space file
-// @Tags         Space
-// @Accept       json
-// @Produce      json
-// @Produce      octet-stream
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Param        file_path path string true "file_path"
-// @Param        ref query string false "ref"
-// @Success      200  {object}  types.Response{data=string} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /spaces/{namespace}/{name}/resolve/{file_path} [get]

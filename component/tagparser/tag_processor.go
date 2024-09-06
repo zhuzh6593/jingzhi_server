@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"caict.ac.cn/llm-server/builder/store/database"
+	"opencsg.com/csghub-server/builder/store/database"
 )
 
 type DatasetTagStore interface {

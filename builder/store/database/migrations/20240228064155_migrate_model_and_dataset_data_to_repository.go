@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	"caict.ac.cn/llm-server/builder/store/database"
 	"github.com/uptrace/bun"
+	"opencsg.com/csghub-server/builder/store/database"
 )
 
 func getModels(ctx context.Context, db bun.Tx) (models []Model, err error) {

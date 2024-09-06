@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"caict.ac.cn/llm-server/builder/store/database"
-	"caict.ac.cn/llm-server/common/config"
-	"caict.ac.cn/llm-server/common/types"
 	"github.com/spf13/cobra"
+	"opencsg.com/csghub-server/builder/store/database"
+	"opencsg.com/csghub-server/common/config"
+	"opencsg.com/csghub-server/common/types"
 )
 
 var logPath string

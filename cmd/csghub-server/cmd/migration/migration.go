@@ -6,11 +6,11 @@ import (
 	"os"
 	"strings"
 
-	"caict.ac.cn/llm-server/builder/store/database"
-	"caict.ac.cn/llm-server/builder/store/database/migrations"
-	"caict.ac.cn/llm-server/common/config"
 	"github.com/spf13/cobra"
 	"github.com/uptrace/bun/migrate"
+	"opencsg.com/csghub-server/builder/store/database"
+	"opencsg.com/csghub-server/builder/store/database/migrations"
+	"opencsg.com/csghub-server/common/config"
 )
 
 // verboseMode whether to show SQL detail

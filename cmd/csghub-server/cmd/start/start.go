@@ -5,15 +5,16 @@ import (
 	"fmt"
 	"time"
 
-	"caict.ac.cn/llm-server/builder/store/database"
-	"caict.ac.cn/llm-server/builder/store/database/migrations"
-	"caict.ac.cn/llm-server/common/config"
 	"github.com/spf13/cobra"
+	"opencsg.com/csghub-server/builder/store/database"
+	"opencsg.com/csghub-server/builder/store/database/migrations"
+	"opencsg.com/csghub-server/common/config"
 )
 
 func init() {
 	Cmd.AddCommand(serverCmd)
 	Cmd.AddCommand(rproxyCmd)
+	Cmd.AddCommand(syncServerCmd)
 }
 
 var Cmd = &cobra.Command{

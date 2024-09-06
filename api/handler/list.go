@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"log/slog"
 
-	"caict.ac.cn/llm-server/api/httpbase"
-	"caict.ac.cn/llm-server/common/config"
-	"caict.ac.cn/llm-server/common/types"
-	"caict.ac.cn/llm-server/component"
 	"github.com/gin-gonic/gin"
+	"opencsg.com/csghub-server/api/httpbase"
+	"opencsg.com/csghub-server/common/config"
+	"opencsg.com/csghub-server/common/types"
+	"opencsg.com/csghub-server/component"
 )
 
 func NewListHandler(config *config.Config) (*ListHandler, error) {

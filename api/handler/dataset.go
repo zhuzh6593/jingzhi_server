@@ -1,20 +1,22 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"slices"
 
-	"caict.ac.cn/llm-server/api/httpbase"
-	"caict.ac.cn/llm-server/common/config"
-	"caict.ac.cn/llm-server/common/types"
-	"caict.ac.cn/llm-server/common/utils/common"
-	"caict.ac.cn/llm-server/component"
 	"github.com/gin-gonic/gin"
+	"opencsg.com/csghub-server/api/httpbase"
+	"opencsg.com/csghub-server/common/config"
+	"opencsg.com/csghub-server/common/types"
+	"opencsg.com/csghub-server/common/utils/common"
+	"opencsg.com/csghub-server/component"
 )
 
 var Sorts = []string{"trending", "recently_update", "most_download", "most_favorite"}
+var Sources = []string{"opencsg", "huggingface", "local"}
 
 func NewDatasetHandler(config *config.Config) (*DatasetHandler, error) {
 	tc, err := component.NewDatasetComponent(config)
@@ -22,45 +24,15 @@ func NewDatasetHandler(config *config.Config) (*DatasetHandler, error) {
 		return nil, err
 	}
 	return &DatasetHandler{
-		c: tc,
+		c:  tc,
+		sc: component.NewSensitiveComponent(config),
 	}, nil
 }
 
 type DatasetHandler struct {
-	c *component.DatasetComponent
+	c  *component.DatasetComponent
+	sc component.SensitiveChecker
 }
-
-// CreateDatasetFile godoc
-// @Security     ApiKey
-// @Summary      Create dataset file
-// @Description  create dataset file
-// @Tags         Dataset
-// @Accept       json
-// @Produce      json
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Param        file_path path string true "file_path"
-// @Param        body body types.CreateFileReq true "body"
-// @Success      200  {object}  types.Response{data=types.CreateFileResp} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /datasets/{namespace}/{name}/raw/{file_path} [post]
-
-// UpdateDatasetFile godoc
-// @Security     ApiKey
-// @Summary      Update dataset file
-// @Description  update dataset file
-// @Tags         Dataset
-// @Accept       json
-// @Produce      json
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Param        file_path path string true "file_path"
-// @Param        body body types.UpdateFileReq true "body"
-// @Success      200  {object}  types.Response{data=types.UpdateFileResp} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /datasets/{namespace}/{name}/raw/{file_path} [put]
 
 // CreateDataset   godoc
 // @Security     ApiKey
@@ -69,18 +41,31 @@ type DatasetHandler struct {
 // @Tags         Dataset
 // @Accept       json
 // @Produce      json
+// @Param        current_user query string false "current user, the owner"
 // @Param        body body types.CreateDatasetReq true "body"
 // @Success      200  {object}  types.Response{data=types.Dataset} "OK"
 // @Failure      400  {object}  types.APIBadRequest "Bad request"
 // @Failure      500  {object}  types.APIInternalServerError "Internal server error"
 // @Router       /datasets [post]
 func (h *DatasetHandler) Create(ctx *gin.Context) {
+	currentUser := httpbase.GetCurrentUser(ctx)
+	if currentUser == "" {
+		httpbase.UnauthorizedError(ctx, errors.New("user not found, please login first"))
+		return
+	}
 	var req *types.CreateDatasetReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		slog.Error("Bad request format", "error", err)
 		httpbase.BadRequest(ctx, err.Error())
 		return
 	}
+	_, err := h.sc.CheckRequest(ctx, req)
+	if err != nil {
+		slog.Error("failed to check sensitive request", slog.Any("error", err))
+		httpbase.BadRequest(ctx, fmt.Errorf("sensitive check failed: %w", err).Error())
+		return
+	}
+	req.Username = currentUser
 
 	dataset, err := h.c.Create(ctx, req)
 	if err != nil {
@@ -102,33 +87,46 @@ func (h *DatasetHandler) Create(ctx *gin.Context) {
 // @Tags         Dataset
 // @Accept       json
 // @Produce      json
+// @Param        current_user query string false "current user"
+// @Param        search query string false "search text"
+// @Param        task_tag query string false "filter by task tag"
+// @Param        framework_tag query string false "filter by framework tag"
+// @Param        license_tag query string false "filter by license tag"
+// @Param        language_tag query string false "filter by language tag"
+// @Param        sort query string false "sort by"
+// @Param        source query string false "source" Enums(opencsg, huggingface, local)
 // @Param        per query int false "per" default(20)
 // @Param        page query int false "per page" default(1)
-// @Param        current_user query string true "current user"
-// @Param        search query string false "search text"
-// @Param        sort query string false "sort by"
 // @Success      200  {object}  types.ResponseWithTotal{data=[]types.Dataset,total=int} "OK"
 // @Failure      400  {object}  types.APIBadRequest "Bad request"
 // @Failure      500  {object}  types.APIInternalServerError "Internal server error"
 // @Router       /datasets [get]
 func (h *DatasetHandler) Index(ctx *gin.Context) {
-	tagReqs := parseTagReqs(ctx)
-	username := ctx.Query("current_user")
+	filter := new(types.RepoFilter)
+	filter.Tags = parseTagReqs(ctx)
+	filter.Username = httpbase.GetCurrentUser(ctx)
 	per, page, err := common.GetPerAndPageFromContext(ctx)
 	if err != nil {
 		slog.Error("Bad request format", "error", err)
 		httpbase.BadRequest(ctx, err.Error())
 		return
 	}
-	search, sort := getFilterFromContext(ctx)
-	if !slices.Contains[[]string](Sorts, sort) {
+	filter = getFilterFromContext(ctx, filter)
+	if !slices.Contains[[]string](Sorts, filter.Sort) {
 		msg := fmt.Sprintf("sort parameter must be one of %v", Sorts)
 		slog.Error("Bad request format,", slog.String("error", msg))
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": msg})
 		return
 	}
 
-	datasets, total, err := h.c.Index(ctx, username, search, sort, tagReqs, per, page)
+	if filter.Source != "" && !slices.Contains[[]string](Sources, filter.Source) {
+		msg := fmt.Sprintf("source parameter must be one of %v", Sources)
+		slog.Error("Bad request format,", slog.String("error", msg))
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": msg})
+		return
+	}
+
+	datasets, total, err := h.c.Index(ctx, filter, per, page)
 	if err != nil {
 		slog.Error("Failed to get datasets", slog.Any("error", err))
 		httpbase.ServerError(ctx, err)
@@ -151,18 +149,32 @@ func (h *DatasetHandler) Index(ctx *gin.Context) {
 // @Produce      json
 // @Param        namespace path string true "namespace"
 // @Param        name path string true "name"
+// @Param        current_user query string false "current user, the owner"
 // @Param        body body types.UpdateDatasetReq true "body"
 // @Success      200  {object}  types.Response{data=database.Dataset} "OK"
 // @Failure      400  {object}  types.APIBadRequest "Bad request"
 // @Failure      500  {object}  types.APIInternalServerError "Internal server error"
 // @Router       /datasets/{namespace}/{name} [put]
 func (h *DatasetHandler) Update(ctx *gin.Context) {
+	currentUser := httpbase.GetCurrentUser(ctx)
+	if currentUser == "" {
+		httpbase.UnauthorizedError(ctx, errors.New("user not found, please login first"))
+		return
+	}
 	var req *types.UpdateDatasetReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		slog.Error("Bad request format", "error", err)
 		httpbase.BadRequest(ctx, err.Error())
 		return
 	}
+
+	_, err := h.sc.CheckRequest(ctx, req)
+	if err != nil {
+		slog.Error("failed to check sensitive request", slog.Any("error", err))
+		httpbase.BadRequest(ctx, fmt.Errorf("sensitive check failed: %w", err).Error())
+		return
+	}
+	req.Username = currentUser
 
 	namespace, name, err := common.GetNamespaceAndNameFromContext(ctx)
 	if err != nil {
@@ -193,19 +205,23 @@ func (h *DatasetHandler) Update(ctx *gin.Context) {
 // @Produce      json
 // @Param        namespace path string true "namespace"
 // @Param        name path string true "name"
-// @Param        current_user query string true "current_user"
+// @Param        current_user query string false "current user, the owner"
 // @Success      200  {object}  types.Response{} "OK"
 // @Failure      400  {object}  types.APIBadRequest "Bad request"
 // @Failure      500  {object}  types.APIInternalServerError "Internal server error"
 // @Router       /datasets/{namespace}/{name} [delete]
 func (h *DatasetHandler) Delete(ctx *gin.Context) {
+	currentUser := httpbase.GetCurrentUser(ctx)
+	if currentUser == "" {
+		httpbase.UnauthorizedError(ctx, errors.New("user not found, please login first"))
+		return
+	}
 	namespace, name, err := common.GetNamespaceAndNameFromContext(ctx)
 	if err != nil {
 		slog.Error("Bad request format", "error", err)
 		httpbase.BadRequest(ctx, err.Error())
 		return
 	}
-	currentUser := ctx.Query("current_user")
 	err = h.c.Delete(ctx, namespace, name, currentUser)
 	if err != nil {
 		slog.Error("Failed to delete dataset", slog.Any("error", err))
@@ -237,9 +253,13 @@ func (h *DatasetHandler) Show(ctx *gin.Context) {
 		httpbase.BadRequest(ctx, err.Error())
 		return
 	}
-	currentUser := ctx.Query("current_user")
+	currentUser := httpbase.GetCurrentUser(ctx)
 	detail, err := h.c.Show(ctx, namespace, name, currentUser)
 	if err != nil {
+		if errors.Is(err, component.ErrUnauthorized) {
+			httpbase.UnauthorizedError(ctx, err)
+			return
+		}
 		slog.Error("Failed to get dataset", slog.Any("error", err))
 		httpbase.ServerError(ctx, err)
 		return
@@ -249,189 +269,86 @@ func (h *DatasetHandler) Show(ctx *gin.Context) {
 	httpbase.OK(ctx, detail)
 }
 
-// GetDatasetCommits godoc
+// DatasetRelations      godoc
 // @Security     ApiKey
-// @Summary      Get dataset commits
-// @Description  get dataset commits
+// @Summary      Get dataset related assets
 // @Tags         Dataset
 // @Accept       json
 // @Produce      json
 // @Param        namespace path string true "namespace"
 // @Param        name path string true "name"
-// @Param        ref query string false "ref"
-// @Success      200  {object}  types.Response{data=[]types.Commit} "OK"
+// @Param        current_user query string false "current_user"
+// @Success      200  {object}  types.Response{data=types.Relations} "OK"
 // @Failure      400  {object}  types.APIBadRequest "Bad request"
 // @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /datasets/{namespace}/{name}/commits [get]
-
-// GetDatasetLastCommit godoc
-// @Security     ApiKey
-// @Summary      Get dataset last commit
-// @Description  get dataset last commit
-// @Tags         Dataset
-// @Accept       json
-// @Produce      json
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Param        ref query string false "ref"
-// @Success      200  {object}  types.Response{data=types.Commit} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /datasets/{namespace}/{name}/last_commit [get]
-
-// GetDatasetFileRaw godoc
-// @Security     ApiKey
-// @Summary      Get dataset file raw
-// @Description  get dataset file raw
-// @Tags         Dataset
-// @Accept       json
-// @Produce      json
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Param        file_path path string true "file_path"
-// @Param        ref query string false "ref"
-// @Success      200  {object}  types.Response{data=types.Commit} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /datasets/{namespace}/{name}/raw/{file_path} [get]
-
-// GetDatasetFileInfo godoc
-// @Security     ApiKey
-// @Summary      Get dataset file info
-// @Description  get dataset file info
-// @Tags         Dataset
-// @Accept       json
-// @Produce      json
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Param        file_path path string true "file_path"
-// @Param        ref query string false "ref"
-// @Success      200  {object}  types.Response{data=types.Commit} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /datasets/{namespace}/{name}/blob/{file_path} [get]
-
-// DownloadDatasetFile godoc
-// @Security     ApiKey
-// @Summary      Download dataset file
-// @Description  download dataset file
-// @Tags         Dataset
-// @Accept       json
-// @Produce      json
-// @Produce      octet-stream
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Param        file_path path string true "file_path"
-// @Param        lfs query bool false "lfs"
-// @Param        ref query string false "ref"
-// @Param        save_as query string false "name of download file"
-// @Success      200  {object}  types.Response{data=string} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /datasets/{namespace}/{name}/download/{file_path} [get]
-
-// GetDatasetBranches godoc
-// @Security     ApiKey
-// @Summary      Get dataset branches
-// @Description  get dataset branches
-// @Tags         Dataset
-// @Accept       json
-// @Produce      json
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @param        per query int false "per" default(20)
-// @Param        page query int false "page" default(1)
-// @Success      200  {object}  types.Response{data=[]types.Branch} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /datasets/{namespace}/{name}/branches [get]
-
-// GetDatasetTags godoc
-// @Security     ApiKey
-// @Summary      Get dataset tags
-// @Description  get dataset tags
-// @Tags         Dataset
-// @Accept       json
-// @Produce      json
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Success      200  {object}  types.Response{data=[]types.Branch} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /datasets/{namespace}/{name}/tags [get]
-
-// GetDatasetFileTree godoc
-// @Security     ApiKey
-// @Summary      Get dataset file tree
-// @Description  get dataset file tree
-// @Tags         Dataset
-// @Accept       json
-// @Produce      json
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Param        ref query string false "ref"
-// @Success      200  {object}  types.Response{data=[]types.File} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /datasets/{namespace}/{name}/tree [get]
-
-// UpdateDatasetDownloads godoc
-// @Security     ApiKey
-// @Summary      Update dataset downloads
-// @Description  update dataset downloads
-// @Tags         Dataset
-// @Accept       json
-// @Produce      json
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Param        body body types.UpdateDownloadsReq true "body"
-// @Success      200  {object}  types.Response{data=[]types.File} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /datasets/{namespace}/{name}/update_downloads [post]
-
-func getFilterFromContext(ctx *gin.Context) (searchKey, sort string) {
-	searchKey = ctx.Query("search")
-	sort = ctx.Query("sort")
-	if sort == "" {
-		sort = "recently_update"
+// @Router       /datasets/{namespace}/{name}/relations [get]
+func (h *DatasetHandler) Relations(ctx *gin.Context) {
+	namespace, name, err := common.GetNamespaceAndNameFromContext(ctx)
+	if err != nil {
+		slog.Error("Bad request format", "error", err)
+		httpbase.BadRequest(ctx, err.Error())
+		return
 	}
-	return
+	currentUser := httpbase.GetCurrentUser(ctx)
+	detail, err := h.c.Relations(ctx, namespace, name, currentUser)
+	if err != nil {
+		if errors.Is(err, component.ErrUnauthorized) {
+			httpbase.UnauthorizedError(ctx, err)
+			return
+		}
+		slog.Error("Failed to get dataset relations", slog.Any("error", err))
+		httpbase.ServerError(ctx, err)
+		return
+	}
+
+	httpbase.OK(ctx, detail)
 }
 
-// UploadDatasetFile godoc
-// @Security     ApiKey
-// @Summary      Create dataset file
-// @Description  upload dataset file to create or update a file in dataset repository
-// @Tags         Dataset
-// @Accept       json
-// @Produce      json
-// @Param        namespace path string true "namespace"
-// @Param        name path string true "name"
-// @Param        file_path formData string true "file_path"
-// @Param        file formData file true "file"
-// @Param        email formData string true "email"
-// @Param        message formData string true "message"
-// @Param        branch formData string false "branch"
-// @Param        username formData string true "username"
-// @Success      200  {object}  types.Response{data=types.CreateFileResp} "OK"
-// @Failure      400  {object}  types.APIBadRequest "Bad request"
-// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /datasets/{namespace}/{name}/upload_file [post]
+func getFilterFromContext(ctx *gin.Context, filter *types.RepoFilter) *types.RepoFilter {
+	filter.Search = ctx.Query("search")
+	filter.Sort = ctx.Query("sort")
+	if filter.Sort == "" {
+		filter.Sort = "recently_update"
+	}
+	filter.Source = ctx.Query("source")
+	return filter
+}
 
-// DownloadDatasetFile godoc
+// DatasetFiles      godoc
 // @Security     ApiKey
-// @Summary      Download dataset file
-// @Description  download dataset file
+// @Summary      Get all files of a dataset
 // @Tags         Dataset
 // @Accept       json
 // @Produce      json
-// @Produce      octet-stream
 // @Param        namespace path string true "namespace"
 // @Param        name path string true "name"
-// @Param        file_path path string true "file_path"
-// @Param        ref query string false "ref"
-// @Success      200  {object}  types.Response{data=string} "OK"
+// @Param        current_user query string false "current user"
+// @Success      200  {object}  types.Response{data=types.File} "OK"
 // @Failure      400  {object}  types.APIBadRequest "Bad request"
 // @Failure      500  {object}  types.APIInternalServerError "Internal server error"
-// @Router       /datasets/{namespace}/{name}/resolve/{file_path} [get]
+// @Router       /datasets/{namespace}/{name}/all_files [get]
+func (h *DatasetHandler) AllFiles(ctx *gin.Context) {
+	namespace, name, err := common.GetNamespaceAndNameFromContext(ctx)
+	if err != nil {
+		slog.Error("Bad request format", "error", err)
+		httpbase.BadRequest(ctx, err.Error())
+		return
+	}
+	var req types.GetAllFilesReq
+	req.Namespace = namespace
+	req.Name = name
+	req.RepoType = types.DatasetRepo
+	req.CurrentUser = httpbase.GetCurrentUser(ctx)
+	detail, err := h.c.AllFiles(ctx, req)
+	if err != nil {
+		if errors.Is(err, component.ErrUnauthorized) {
+			httpbase.UnauthorizedError(ctx, err)
+			return
+		}
+		slog.Error("Failed to get dataset all files", slog.Any("error", err))
+		httpbase.ServerError(ctx, err)
+		return
+	}
+
+	httpbase.OK(ctx, detail)
+}

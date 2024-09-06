@@ -77,7 +77,7 @@ func (h *RemoteBuilder) Status(ctx context.Context, req *StatusRequest) (*Status
 func (h *RemoteBuilder) Logs(ctx context.Context, req *LogsRequest) (<-chan string, error) {
 	u := fmt.Sprintf("%s/%s/%s/logs?build_id=%s", h.remote, req.OrgName, req.SpaceName, req.BuildID)
 
-	rc, err := h.doSSERequest(http.MethodGet, u, req)
+	rc, err := h.doStreamRequest(ctx, http.MethodGet, u, req)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (h *RemoteBuilder) readToChannel(rc io.ReadCloser) <-chan string {
 		for {
 			n, err := br.Read(buf)
 			if err != nil {
-				slog.Error("multi log reader get EOF from inner log reader", slog.Any("error", err))
+				slog.Info("remote builder log reader aborted", slog.Any("error", err))
 				rc.Close()
 				close(output)
 				break
@@ -134,13 +134,19 @@ func (h *RemoteBuilder) doRequest(method, url string, data interface{}) (*http.R
 		return nil, err
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("unexpected http status code:%d", resp.StatusCode)
+		var errData interface{}
+		err := json.NewDecoder(resp.Body).Decode(&errData)
+		if err != nil {
+			return nil, fmt.Errorf("unexpected http status: %d, error: %w", resp.StatusCode, err)
+		} else {
+			return nil, fmt.Errorf("unexpected http status: %d, error: %v", resp.StatusCode, errData)
+		}
 	}
 
 	return resp, nil
 }
 
-func (h *RemoteBuilder) doSSERequest(method, url string, data interface{}) (io.ReadCloser, error) {
+func (h *RemoteBuilder) doStreamRequest(ctx context.Context, method, url string, data interface{}) (io.ReadCloser, error) {
 	var buf io.Reader
 	if data != nil {
 		jsonData, err := json.Marshal(data)
@@ -150,7 +156,7 @@ func (h *RemoteBuilder) doSSERequest(method, url string, data interface{}) (io.R
 		buf = bytes.NewBuffer(jsonData)
 	}
 
-	req, err := http.NewRequest(method, url, buf)
+	req, err := http.NewRequestWithContext(ctx, method, url, buf)
 	if err != nil {
 		return nil, err
 	}

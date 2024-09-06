@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"fmt"
-	"time"
 )
 
 type SpaceResourceStore struct {
@@ -15,21 +14,17 @@ func NewSpaceResourceStore() *SpaceResourceStore {
 }
 
 type SpaceResource struct {
-	ID     int64  `bun:",pk,autoincrement" json:"id"`
-	Name   string `bun:",notnull" json:"name"`
-	Cpu    int    `bun:",notnull" json:"cpu"`
-	Gpu    int    `bun:",notnull" json:"gpu"`
-	Memory int    `bun:",notnull" json:"memory"`
-	Disk   int    `bun:",notnull" json:"disk"`
+	ID          int64   `bun:",pk,autoincrement" json:"id"`
+	Name        string  `bun:",notnull" json:"name"`
+	Resources   string  `bun:",notnull" json:"resources"`
+	CostPerHour float64 `bun:",notnull" json:"cost_per_hour"`
+	ClusterID   string  `bun:",notnull" json:"cluster_id"`
 	times
 }
 
-func (s *SpaceResourceStore) Index(ctx context.Context) ([]SpaceResource, error) {
+func (s *SpaceResourceStore) Index(ctx context.Context, clusterId string) ([]SpaceResource, error) {
 	var result []SpaceResource
-	_, err := s.db.Operator.Core.
-		NewSelect().
-		Model(&result).
-		Exec(ctx, &result)
+	_, err := s.db.Operator.Core.NewSelect().Model(&result).Where("cluster_id = ?", clusterId).Order("name asc").Exec(ctx, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +41,6 @@ func (s *SpaceResourceStore) Create(ctx context.Context, input SpaceResource) (*
 }
 
 func (s *SpaceResourceStore) Update(ctx context.Context, input SpaceResource) (*SpaceResource, error) {
-	input.UpdatedAt = time.Now()
 	_, err := s.db.Core.NewUpdate().Model(&input).WherePK().Exec(ctx)
 
 	return &input, err
@@ -64,4 +58,20 @@ func (s *SpaceResourceStore) FindByID(ctx context.Context, id int64) (*SpaceReso
 	_, err := s.db.Core.NewSelect().Model(&res).WherePK().Exec(ctx, &res)
 
 	return &res, err
+}
+
+func (s *SpaceResourceStore) FindByName(ctx context.Context, name string) (*SpaceResource, error) {
+	var res SpaceResource
+	err := s.db.Core.NewSelect().Model(&res).Where("name = ?", name).Scan(ctx)
+
+	return &res, err
+}
+
+func (s *SpaceResourceStore) FindAll(ctx context.Context) ([]SpaceResource, error) {
+	var result []SpaceResource
+	_, err := s.db.Operator.Core.NewSelect().Model(&result).Exec(ctx, &result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }

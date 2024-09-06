@@ -4,11 +4,11 @@ import (
 	"log/slog"
 	"strconv"
 
-	"caict.ac.cn/llm-server/api/httpbase"
-	"caict.ac.cn/llm-server/common/config"
-	"caict.ac.cn/llm-server/common/utils/common"
-	"caict.ac.cn/llm-server/component"
 	"github.com/gin-gonic/gin"
+	"opencsg.com/csghub-server/api/httpbase"
+	"opencsg.com/csghub-server/common/config"
+	"opencsg.com/csghub-server/common/utils/common"
+	"opencsg.com/csghub-server/component"
 )
 
 type DatasetViewerHandler struct {

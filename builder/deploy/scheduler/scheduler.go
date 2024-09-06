@@ -8,9 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"caict.ac.cn/llm-server/builder/deploy/imagebuilder"
-	"caict.ac.cn/llm-server/builder/deploy/imagerunner"
-	"caict.ac.cn/llm-server/builder/store/database"
+	"opencsg.com/csghub-server/builder/deploy/imagebuilder"
+	"opencsg.com/csghub-server/builder/deploy/imagerunner"
+	"opencsg.com/csghub-server/builder/store/database"
+	"opencsg.com/csghub-server/common/types"
 )
 
 type Scheduler interface {
@@ -25,21 +26,27 @@ type FIFOScheduler struct {
 	tasks chan Runner
 	last  *database.DeployTask
 
-	store      *database.DeployTaskStore
-	spaceStore *database.SpaceStore
-	ib         imagebuilder.Builder
-	ir         imagerunner.Runner
+	store               *database.DeployTaskStore
+	spaceStore          *database.SpaceStore
+	modelStore          *database.ModelStore
+	spaceResourcesStore *database.SpaceResourceStore
+	ib                  imagebuilder.Builder
+	ir                  imagerunner.Runner
 
-	nextLock *sync.Mutex
+	nextLock                *sync.Mutex
+	spaceDeployTimeoutInMin int
+	modelDeployTimeoutInMin int
+	modelDownloadEndpoint   string
 }
 
-func NewFIFOScheduler(ib imagebuilder.Builder, ir imagerunner.Runner) Scheduler {
+func NewFIFOScheduler(ib imagebuilder.Builder, ir imagerunner.Runner, sdt, mdt int, mdep string) Scheduler {
 	s := &FIFOScheduler{}
 	// TODO:allow config
 	s.timeout = 30 * time.Minute
 	s.store = database.NewDeployTaskStore()
 	s.spaceStore = database.NewSpaceStore()
-
+	s.modelStore = database.NewModelStore()
+	s.spaceResourcesStore = database.NewSpaceResourceStore()
 	// allow concurrent deployment tasks
 	s.tasks = make(chan Runner, 100)
 	// s.ib = imagebuilder.NewLocalBuilder()
@@ -47,6 +54,9 @@ func NewFIFOScheduler(ib imagebuilder.Builder, ir imagerunner.Runner) Scheduler 
 	s.ib = ib
 	s.ir = ir
 	s.nextLock = &sync.Mutex{}
+	s.spaceDeployTimeoutInMin = sdt
+	s.modelDeployTimeoutInMin = mdt
+	s.modelDownloadEndpoint = mdep
 	return s
 }
 
@@ -64,7 +74,7 @@ func (rs *FIFOScheduler) Run() error {
 		}
 	}()
 
-	slog.Debug("scheudler try to loop through tasks channel")
+	slog.Debug("scheduler try to loop through tasks channel")
 	for t := range rs.tasks {
 		go func(t Runner) {
 			slog.Debug("dequeue a task to run", slog.Any("task", t.WatchID()))
@@ -124,14 +134,48 @@ func (rs *FIFOScheduler) next() (Runner, error) {
 		rs.tasks <- t
 		return t, nil
 	}
-	var s *database.Space
-	s, err = rs.spaceStore.ByID(ctx, deployTask.Deploy.SpaceID)
+
+	var repo RepoInfo
+
+	if deployTask.Deploy.SpaceID > 0 {
+		// handle space
+		var s *database.Space
+		s, err = rs.spaceStore.ByID(ctx, deployTask.Deploy.SpaceID)
+		if err == nil {
+			repo.Path = s.Repository.Path
+			repo.Name = s.Repository.Name
+			repo.Sdk = s.Sdk
+			repo.SdkVersion = s.SdkVersion
+			repo.HTTPCloneURL = s.Repository.HTTPCloneURL
+			repo.SpaceID = s.ID
+			repo.RepoID = s.Repository.ID
+			repo.UserName = s.Repository.User.Username
+			repo.DeployID = deployTask.Deploy.ID
+			repo.ModelID = 0
+			repo.RepoType = string(types.SpaceRepo)
+		}
+	} else if deployTask.Deploy.ModelID > 0 {
+		// handle model
+		var m *database.Model
+		m, err = rs.modelStore.ByID(ctx, deployTask.Deploy.ModelID)
+		if err == nil {
+			repo.Path = m.Repository.Path
+			repo.Name = m.Repository.Name
+			repo.ModelID = m.ID
+			repo.RepoID = m.Repository.ID
+			repo.UserName = m.Repository.User.Username
+			repo.DeployID = deployTask.Deploy.ID
+			repo.SpaceID = 0
+			repo.RepoType = string(types.ModelRepo)
+		}
+	}
+
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			slog.Info("cancel deploy task as space not found", slog.Int64("deploy_task_id", deployTask.ID), slog.Int64("space_id", deployTask.Deploy.SpaceID))
+			slog.Warn("cancel deploy task as repo not found", slog.Any("deploy_task", deployTask))
 			// mark task as cancelled
 			deployTask.Status = cancelled
-			deployTask.Message = "space not found"
+			deployTask.Message = "repo not found"
 			rs.store.UpdateDeployTask(ctx, deployTask)
 		}
 		t = &sleepTask{
@@ -143,9 +187,15 @@ func (rs *FIFOScheduler) next() (Runner, error) {
 	}
 	// for build task
 	if deployTask.TaskType == 0 {
-		t = NewBuidRunner(rs.ib, s, deployTask)
+		t = NewBuidRunner(rs.ib, &repo, deployTask)
 	} else {
-		t = NewDeployRunner(rs.ir, s, deployTask)
+		t = NewDeployRunner(rs.ir, &repo, deployTask,
+			&DeployTimeout{
+				deploySpaceTimeoutInMin: rs.spaceDeployTimeoutInMin,
+				deployModelTimeoutInMin: rs.modelDeployTimeoutInMin,
+			},
+			rs.modelDownloadEndpoint,
+		)
 	}
 
 	rs.last = deployTask

@@ -7,13 +7,14 @@ import (
 	"log/slog"
 	"path"
 	"strings"
+	"time"
 
-	"caict.ac.cn/llm-server/builder/git"
-	"caict.ac.cn/llm-server/builder/git/gitserver"
-	"caict.ac.cn/llm-server/builder/store/database"
-	"caict.ac.cn/llm-server/common/config"
-	"caict.ac.cn/llm-server/common/types"
-	"caict.ac.cn/llm-server/component"
+	"opencsg.com/csghub-server/builder/git"
+	"opencsg.com/csghub-server/builder/git/gitserver"
+	"opencsg.com/csghub-server/builder/store/database"
+	"opencsg.com/csghub-server/common/config"
+	"opencsg.com/csghub-server/common/types"
+	"opencsg.com/csghub-server/component"
 )
 
 const (
@@ -26,13 +27,18 @@ const (
 
 // define GitCallbackComponent struct
 type GitCallbackComponent struct {
-	config  *config.Config
-	gs      gitserver.GitServer
-	tc      *component.TagComponent
-	checker component.SensitiveChecker
-	ms      *database.ModelStore
-	ds      *database.DatasetStore
-	sc      *component.SpaceComponent
+	config      *config.Config
+	gs          gitserver.GitServer
+	tc          *component.TagComponent
+	checker     component.SensitiveChecker
+	ms          *database.ModelStore
+	ds          *database.DatasetStore
+	sc          *component.SpaceComponent
+	ss          *database.SpaceStore
+	rs          *database.RepoStore
+	rrs         *database.RepoRelationsStore
+	mirrorStore *database.MirrorStore
+	svGen       *SyncVersionGenerator
 	// set visibility if file content is sensitive
 	setRepoVisibility bool
 }
@@ -49,19 +55,29 @@ func NewGitCallback(config *config.Config) (*GitCallbackComponent, error) {
 	}
 	ms := database.NewModelStore()
 	ds := database.NewDatasetStore()
+	ss := database.NewSpaceStore()
+	rs := database.NewRepoStore()
+	rrs := database.NewRepoRelationsStore()
+	mirrorStore := database.NewMirrorStore()
 	checker := component.NewSensitiveComponent(config)
 	sc, err := component.NewSpaceComponent(config)
 	if err != nil {
 		return nil, err
 	}
+	svGen := NewSyncVersionGenerator()
 	return &GitCallbackComponent{
-		config:  config,
-		gs:      gs,
-		tc:      tc,
-		ms:      ms,
-		ds:      ds,
-		sc:      sc,
-		checker: checker,
+		config:      config,
+		gs:          gs,
+		tc:          tc,
+		ms:          ms,
+		ds:          ds,
+		ss:          ss,
+		sc:          sc,
+		rs:          rs,
+		rrs:         rrs,
+		mirrorStore: mirrorStore,
+		checker:     checker,
+		svGen:       svGen,
 	}, nil
 }
 
@@ -71,12 +87,72 @@ func (c *GitCallbackComponent) SetRepoVisibility(yes bool) {
 }
 
 func (c *GitCallbackComponent) HandlePush(ctx context.Context, req *types.GiteaCallbackPushReq) error {
+	go func() {
+		err := WatchSpaceChange(req, c.ss, c.sc).Run()
+		if err != nil {
+			slog.Error("watch space change failed", slog.Any("error", err))
+		}
+	}()
+
+	go func() {
+		err := WatchRepoRelation(req, c.rs, c.rrs, c.gs).Run()
+		if err != nil {
+			slog.Error("watch repo relation failed", slog.Any("error", err))
+		}
+	}()
+
+	if !req.Repository.Private {
+		go func() {
+			err := c.svGen.GenSyncVersion(req)
+			if err != nil {
+				slog.Error("generate sync version failed", slog.Any("error", err))
+			}
+		}()
+	}
+
 	commits := req.Commits
 	ref := req.Ref
 	// split req.Repository.FullName by '/'
 	splits := strings.Split(req.Repository.FullName, "/")
 	fullNamespace, repoName := splits[0], splits[1]
 	repoType, namespace, _ := strings.Cut(fullNamespace, "_")
+
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		adjustedRepoType := types.RepositoryType(strings.TrimRight(repoType, "s"))
+
+		isMirrorRepo, err := c.rs.IsMirrorRepo(ctx, adjustedRepoType, namespace, repoName)
+		if err != nil {
+			slog.Error("failed to check if a mirror repo", slog.Any("error", err), slog.String("repo_type", string(adjustedRepoType)), slog.String("namespace", namespace), slog.String("name", repoName))
+		}
+		if isMirrorRepo {
+			updated, err := time.Parse(time.RFC3339, req.HeadCommit.Timestamp)
+			if err != nil {
+				slog.Error("Error parsing time:", slog.Any("error", err), slog.String("timestamp", req.HeadCommit.Timestamp))
+				return
+			}
+			err = c.rs.SetUpdateTimeByPath(ctx, adjustedRepoType, namespace, repoName, updated)
+			if err != nil {
+				slog.Error("failed to set repo update time", slog.Any("error", err), slog.String("repo_type", string(adjustedRepoType)), slog.String("namespace", namespace), slog.String("name", repoName))
+			}
+			mirror, err := c.mirrorStore.FindByRepoPath(ctx, adjustedRepoType, namespace, repoName)
+			if err != nil {
+				slog.Error("failed to find repo mirror", slog.Any("error", err), slog.String("repo_type", string(adjustedRepoType)), slog.String("namespace", namespace), slog.String("name", repoName))
+			}
+			mirror.LastUpdatedAt = time.Now()
+			err = c.mirrorStore.Update(ctx, mirror)
+			if err != nil {
+				slog.Error("failed to update repo mirror last_updated_at", slog.Any("error", err), slog.String("repo_type", string(adjustedRepoType)), slog.String("namespace", namespace), slog.String("name", repoName))
+			}
+		} else {
+			err := c.rs.SetUpdateTimeByPath(ctx, adjustedRepoType, namespace, repoName, time.Now())
+			if err != nil {
+				slog.Error("failed to set repo update time", slog.Any("error", err), slog.String("repo_type", string(adjustedRepoType)), slog.String("namespace", namespace), slog.String("name", repoName))
+			}
+		}
+	}()
+
 	var err error
 	for _, commit := range commits {
 		err = errors.Join(err, c.modifyFiles(ctx, repoType, namespace, repoName, ref, commit.Modified))
@@ -89,17 +165,6 @@ func (c *GitCallbackComponent) HandlePush(ctx context.Context, req *types.GiteaC
 		return err
 	}
 
-	// trigger space deployment
-	if repoType == "spaces" && c.sc.HasAppFile(ctx, namespace, repoName) {
-		go func() {
-			deployID, err := c.sc.Deploy(ctx, namespace, repoName)
-			if err != nil {
-				slog.Error("failed to trigger space delopy", slog.Any("error", err))
-			} else {
-				slog.Info("space deploy triggered", slog.Int64("deploy_id", deployID))
-			}
-		}()
-	}
 	return nil
 }
 
@@ -118,7 +183,7 @@ func (c *GitCallbackComponent) modifyFiles(ctx context.Context, repoType, namesp
 		}
 		if c.setRepoVisibility {
 			go func(content string) {
-				ok, err := c.checkFileContent(ctx, repoType, namespace, repoName, ref, content)
+				ok, err := c.checkFileContent(ctx, repoType, namespace, repoName, content)
 				if err != nil {
 					slog.Error("callback check file failed", slog.String("repo", path.Join(namespace, repoName)), slog.String("file", fileName),
 						slog.String("error", err.Error()))
@@ -190,7 +255,7 @@ func (c *GitCallbackComponent) addFiles(ctx context.Context, repoType, namespace
 			}
 			if c.setRepoVisibility {
 				go func(content string) {
-					ok, err := c.checkFileContent(ctx, repoType, namespace, repoName, ref, content)
+					ok, err := c.checkFileContent(ctx, repoType, namespace, repoName, content)
 					if err != nil {
 						slog.Error("callback check file failed", slog.String("file", fileName), slog.String("error", err.Error()))
 						return
@@ -287,7 +352,7 @@ func (c *GitCallbackComponent) getFileRaw(repoType, namespace, repoName, ref, fi
 	return content, nil
 }
 
-func (c *GitCallbackComponent) checkFileContent(ctx context.Context, repoType, namespace, repoName, ref, content string) (bool, error) {
+func (c *GitCallbackComponent) checkFileContent(ctx context.Context, repoType, namespace, repoName, content string) (bool, error) {
 	ok, err := c.checkText(ctx, content)
 	if err != nil {
 		return ok, err

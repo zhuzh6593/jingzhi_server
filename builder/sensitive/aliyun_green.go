@@ -10,12 +10,12 @@ import (
 	"net/http"
 	"strings"
 
-	"caict.ac.cn/llm-server/common/config"
-	"caict.ac.cn/llm-server/common/utils/common"
 	openapi "github.com/alibabacloud-go/darabonba-openapi/v2/client"
 	green20220302 "github.com/alibabacloud-go/green-20220302/client"
 	"github.com/alibabacloud-go/tea/tea"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/green"
+	"opencsg.com/csghub-server/common/config"
+	"opencsg.com/csghub-server/common/utils/common"
 )
 
 /*

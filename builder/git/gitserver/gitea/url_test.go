@@ -3,7 +3,7 @@ package gitea
 import (
 	"testing"
 
-	"caict.ac.cn/llm-server/common/types"
+	"opencsg.com/csghub-server/common/types"
 )
 
 func Test_repoPrefixByType(t *testing.T) {

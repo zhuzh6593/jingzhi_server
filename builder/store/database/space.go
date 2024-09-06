@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
-	"time"
 
 	"github.com/uptrace/bun"
+	"opencsg.com/csghub-server/common/types"
 )
 
 type SpaceStore struct {
@@ -47,51 +46,8 @@ func (s *SpaceStore) Create(ctx context.Context, input Space) (*Space, error) {
 }
 
 func (s *SpaceStore) Update(ctx context.Context, input Space) (err error) {
-	input.UpdatedAt = time.Now()
 	_, err = s.db.Core.NewUpdate().Model(&input).WherePK().Exec(ctx)
 	return
-}
-
-func (s *SpaceStore) PublicToUser(ctx context.Context, userID int64, search, sort string, per, page int) ([]Space, int, error) {
-	var (
-		spaces []Space
-		count  int
-		err    error
-	)
-	query := s.db.Operator.Core.
-		NewSelect().
-		Model(&spaces).
-		Relation("Repository")
-
-	if userID > 0 {
-		query = query.Where("repository.private = ? or repository.user_id = ?", false, userID)
-	} else {
-		query = query.Where("repository.private = ?", false)
-	}
-
-	if search != "" {
-		search = strings.ToLower(search)
-		query = query.Where(
-			"LOWER(repository.path) like ? or LOWER(repository.name) like ?",
-			fmt.Sprintf("%%%s%%", search),
-			fmt.Sprintf("%%%s%%", search),
-		)
-	}
-
-	count, err = query.Count(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	query = query.Order(sortBy[sort])
-	query = query.Limit(per).
-		Offset((page - 1) * per)
-
-	err = query.Scan(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
-	return spaces, count, nil
 }
 
 func (s *SpaceStore) FindByPath(ctx context.Context, namespace, name string) (*Space, error) {
@@ -100,7 +56,7 @@ func (s *SpaceStore) FindByPath(ctx context.Context, namespace, name string) (*S
 		NewSelect().
 		Model(resSpace).
 		Relation("Repository.User").
-		Where("repository.path =?", fmt.Sprintf("%s/%s", namespace, name)).
+		Where("repository.path = ? and repository.repository_type = ?", fmt.Sprintf("%s/%s", namespace, name), types.SpaceRepo).
 		Scan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find space: %w", err)
@@ -118,11 +74,31 @@ func (s *SpaceStore) Delete(ctx context.Context, input Space) error {
 }
 
 func (s *SpaceStore) ByID(ctx context.Context, id int64) (*Space, error) {
-	space := new(Space)
-	return space, s.db.Core.NewSelect().Model(space).
-		Relation("Repository").
-		Where("space.id = ?", id).
+	var space Space
+	err := s.db.Core.NewSelect().Model(&space).Relation("Repository").Where("space.id = ?", id).Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &space, err
+}
+
+// ByRepoIDs get spaces by repoIDs, only basice info, no related repo
+func (s *SpaceStore) ByRepoIDs(ctx context.Context, repoIDs []int64) (spaces []Space, err error) {
+	err = s.db.Operator.Core.NewSelect().
+		Model(&spaces).
+		Where("repository_id in (?)", bun.In(repoIDs)).
 		Scan(ctx)
+
+	return
+}
+
+func (s *SpaceStore) ByRepoID(ctx context.Context, repoID int64) (*Space, error) {
+	var space Space
+	err := s.db.Core.NewSelect().Model(&space).Where("repository_id = ?", repoID).Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find space by id, repository id: %d,error: %w", repoID, err)
+	}
+	return &space, err
 }
 
 func (s *SpaceStore) ByUsername(ctx context.Context, username string, per, page int, onlyPublic bool) (spaces []Space, total int, err error) {
@@ -135,6 +111,28 @@ func (s *SpaceStore) ByUsername(ctx context.Context, username string, per, page 
 	if onlyPublic {
 		query = query.Where("repository.private = ?", false)
 	}
+	query = query.Order("space.created_at DESC").
+		Limit(per).
+		Offset((page - 1) * per)
+
+	err = query.Scan(ctx)
+	if err != nil {
+		return
+	}
+	total, err = query.Count(ctx)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (s *SpaceStore) ByUserLikes(ctx context.Context, userID int64, per, page int) (spaces []Space, total int, err error) {
+	query := s.db.Operator.Core.
+		NewSelect().
+		Model(&spaces).
+		Relation("Repository.Tags").
+		Where("repository.id in (select repo_id from user_likes where user_id=?)", userID)
+
 	query = query.Order("space.created_at DESC").
 		Limit(per).
 		Offset((page - 1) * per)

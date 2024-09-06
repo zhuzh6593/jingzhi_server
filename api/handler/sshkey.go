@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"log/slog"
 
-	"caict.ac.cn/llm-server/api/httpbase"
-	"caict.ac.cn/llm-server/common/config"
-	"caict.ac.cn/llm-server/common/types"
-	"caict.ac.cn/llm-server/common/utils/common"
-	"caict.ac.cn/llm-server/component"
 	"github.com/gin-gonic/gin"
+	"opencsg.com/csghub-server/api/httpbase"
+	"opencsg.com/csghub-server/common/config"
+	"opencsg.com/csghub-server/common/types"
+	"opencsg.com/csghub-server/common/utils/common"
+	"opencsg.com/csghub-server/component"
 )
 
 func NewSSHKeyHandler(config *config.Config) (*SSHKeyHandler, error) {
@@ -18,12 +18,14 @@ func NewSSHKeyHandler(config *config.Config) (*SSHKeyHandler, error) {
 		return nil, err
 	}
 	return &SSHKeyHandler{
-		c: oc,
+		c:  oc,
+		sc: component.NewSensitiveComponent(config),
 	}, nil
 }
 
 type SSHKeyHandler struct {
-	c *component.SSHKeyComponent
+	c  *component.SSHKeyComponent
+	sc component.SensitiveChecker
 }
 
 // CreateUserSSHKey godoc
@@ -46,6 +48,14 @@ func (h *SSHKeyHandler) Create(ctx *gin.Context) {
 		httpbase.BadRequest(ctx, err.Error())
 		return
 	}
+
+	_, err := h.sc.CheckRequest(ctx, &req)
+	if err != nil {
+		slog.Error("failed to check sensitive request", slog.Any("error", err))
+		httpbase.BadRequest(ctx, fmt.Errorf("sensitive check failed: %w", err).Error())
+		return
+	}
+
 	req.Username = ctx.Param("username")
 	sk, err := h.c.Create(ctx, &req)
 	if err != nil {

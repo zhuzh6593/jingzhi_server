@@ -8,23 +8,23 @@ import (
 	"strings"
 	"time"
 
-	"caict.ac.cn/llm-server/builder/deploy/common"
-	"caict.ac.cn/llm-server/builder/deploy/imagebuilder"
-	"caict.ac.cn/llm-server/builder/store/database"
+	"opencsg.com/csghub-server/builder/deploy/common"
+	"opencsg.com/csghub-server/builder/deploy/imagebuilder"
+	"opencsg.com/csghub-server/builder/store/database"
 )
 
 // BuilderRunner defines a docker image building task
 type BuilderRunner struct {
-	space       *database.Space
+	repo        *RepoInfo
 	task        *database.DeployTask
 	ib          imagebuilder.Builder
 	deployStore *database.DeployTaskStore
 	tokenStore  *database.AccessTokenStore
 }
 
-func NewBuidRunner(b imagebuilder.Builder, s *database.Space, t *database.DeployTask) Runner {
+func NewBuidRunner(b imagebuilder.Builder, r *RepoInfo, t *database.DeployTask) Runner {
 	return &BuilderRunner{
-		space:       s,
+		repo:        r,
 		task:        t,
 		ib:          b,
 		deployStore: database.NewDeployTaskStore(),
@@ -33,23 +33,34 @@ func NewBuidRunner(b imagebuilder.Builder, s *database.Space, t *database.Deploy
 }
 
 func (t *BuilderRunner) makeBuildRequest() (*imagebuilder.BuildRequest, error) {
-	token, err := t.tokenStore.FindByUID(context.Background(), t.space.Repository.UserID)
+	token, err := t.tokenStore.FindByUID(context.Background(), t.task.Deploy.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("cant get git access token:%w", err)
 	}
-	fields := strings.Split(t.space.Repository.Path, "/")
+	fields := strings.Split(t.repo.Path, "/")
+	sdkVer := ""
+	if t.repo.SdkVersion == "" {
+		slog.Warn("Use SDK default version", slog.Any("repository path", t.repo.Path))
+		if t.repo.Sdk == GRADIO.Name {
+			sdkVer = GRADIO.Version
+		} else if t.repo.Sdk == STREAMLIT.Name {
+			sdkVer = STREAMLIT.Version
+		}
+	} else {
+		sdkVer = t.repo.SdkVersion
+	}
 	return &imagebuilder.BuildRequest{
 		OrgName:   fields[0],
 		SpaceName: fields[1],
-		Hardware:  t.parseHardware(t.space.Hardware),
+		Hardware:  t.parseHardware(t.task.Deploy.Hardware),
 		// PythonVersion:  t.space.PythonVersion,
 		PythonVersion: "3.10",
-		SDKType:       "gradio",
-		SDKVersion:    "3.37.0",
-		// SDKType:        t.space.Sdk,
-		// SDKVersion:     t.space.SdkVersion,
-		SpaceGitURL:    t.space.Repository.HTTPCloneURL,
-		GitRef:         t.space.Repository.DefaultBranch,
+		// SDKType:       "gradio",
+		// SDKVersion:    "3.37.0",
+		SDKType:        t.repo.Sdk,
+		SDKVersion:     sdkVer,
+		SpaceGitURL:    t.repo.HTTPCloneURL,
+		GitRef:         t.task.Deploy.GitBranch,
 		GitUserID:      token.User.Username,
 		GitAccessToken: token.Token,
 		BuildID:        strconv.FormatInt(t.task.DeployID, 10),
@@ -74,12 +85,12 @@ func (t *BuilderRunner) Run(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("make build request failed: %w", err)
 		}
+		slog.Debug("make build request", slog.Any("req", req))
 		resp, err := t.ib.Build(context.Background(), req)
 		if err != nil {
 			// TODO:return retryable error
 			return fmt.Errorf("call image builder failed: %w", err)
 		}
-
 		if resp.Code != 0 {
 			// job failed
 			return fmt.Errorf("image builder reported error,code:%d,msg:%s", resp.Code, resp.Message)
@@ -90,7 +101,7 @@ func (t *BuilderRunner) Run(ctx context.Context) error {
 
 	// keep checking build status
 	for {
-		fields := strings.Split(t.space.Repository.Path, "/")
+		fields := strings.Split(t.repo.Path, "/")
 		req := &imagebuilder.StatusRequest{
 			OrgName:   fields[0],
 			SpaceName: fields[1],
@@ -111,12 +122,12 @@ func (t *BuilderRunner) Run(ctx context.Context) error {
 			time.Sleep(10 * time.Second)
 			continue
 		case resp.Success():
-			slog.Info("image build succeeded", slog.String("space_name", t.space.Repository.Name), slog.Any("deplopy_task_id", t.task.ID))
+			slog.Info("image build succeeded", slog.String("repo_name", t.repo.Name), slog.Any("deplopy_task_id", t.task.ID))
 			t.buildSuccess(*resp)
 
 			return nil
 		case resp.Fail():
-			slog.Info("image build failed", slog.String("space_name", t.space.Repository.Name), slog.Any("deplopy_task_id", t.task.ID))
+			slog.Info("image build failed", slog.String("repo_name", t.repo.Name), slog.Any("deplopy_task_id", t.task.ID))
 			t.buildFailed()
 
 			return nil

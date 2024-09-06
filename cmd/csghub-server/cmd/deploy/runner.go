@@ -1,9 +1,11 @@
 package deploy
 
 import (
-	"caict.ac.cn/llm-server/builder/deploy/imagerunner"
-	"caict.ac.cn/llm-server/common/config"
 	"github.com/spf13/cobra"
+	"opencsg.com/csghub-server/api/httpbase"
+	"opencsg.com/csghub-server/builder/store/database"
+	"opencsg.com/csghub-server/common/config"
+	"opencsg.com/csghub-server/servicerunner/router"
 )
 
 var startRunnerCmd = &cobra.Command{
@@ -18,11 +20,23 @@ var startRunnerCmd = &cobra.Command{
 			return err
 		}
 
-		s, err := imagerunner.NewHttpServer(config)
+		dbConfig := database.DBConfig{
+			Dialect: database.DatabaseDialect(config.Database.Driver),
+			DSN:     config.Database.DSN,
+		}
+		database.InitDB(dbConfig)
+
+		s, err := router.NewHttpServer(config)
 		if err != nil {
 			return err
 		}
-		err = s.Run(8082)
-		return err
+		server := httpbase.NewGracefulServer(
+			httpbase.GraceServerOpt{
+				Port: config.Space.RunnerServerPort,
+			},
+			s,
+		)
+		server.Run()
+		return nil
 	},
 }

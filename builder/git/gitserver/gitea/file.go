@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"caict.ac.cn/llm-server/builder/git/gitserver"
-	"caict.ac.cn/llm-server/common/types"
-	"caict.ac.cn/llm-server/common/utils/common"
 	"github.com/OpenCSGs/gitea-go-sdk/gitea"
+	"opencsg.com/csghub-server/builder/git/gitserver"
+	"opencsg.com/csghub-server/common/types"
+	"opencsg.com/csghub-server/common/utils/common"
 )
 
 const (
@@ -78,20 +78,20 @@ func (c *Client) GetRepoFileRaw(ctx context.Context, req gitserver.GetRepoInfoBy
 	return string(giteaFileData), nil
 }
 
-func (c *Client) GetRepoFileReader(ctx context.Context, req gitserver.GetRepoInfoByPathReq) (io.ReadCloser, error) {
+func (c *Client) GetRepoFileReader(ctx context.Context, req gitserver.GetRepoInfoByPathReq) (io.ReadCloser, int64, error) {
 	namespace := common.WithPrefix(req.Namespace, repoPrefixByType(req.RepoType))
 	entries, _, err := c.giteaClient.GetDir(namespace, req.Name, req.Ref, req.Path)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if entries[0].Size > NonLFSFileSizeLimit {
-		return nil, errors.New("file is larger than 10MB")
+		return nil, 0, errors.New("file is larger than 10MB")
 	}
 	giteaFileReader, _, err := c.giteaClient.GetFileReader(namespace, req.Name, req.Ref, req.Path)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return giteaFileReader, nil
+	return giteaFileReader, entries[0].Size, nil
 }
 
 func (c *Client) GetRepoLfsFileRaw(ctx context.Context, req gitserver.GetRepoInfoByPathReq) (io.ReadCloser, error) {
@@ -104,7 +104,11 @@ func (c *Client) GetRepoFileContents(ctx context.Context, req gitserver.GetRepoI
 	namespace := common.WithPrefix(req.Namespace, repoPrefixByType(req.RepoType))
 	file, err := c.getFileContents(namespace, req.Name, req.Ref, req.Path)
 	if err != nil {
-		return nil, errors.New("failed to get dataset file contents")
+		if err.Error() == "GetContentsOrList" {
+			// not found message of gitea
+			return nil, err
+		}
+		return nil, errors.New("failed to get repo file contents")
 	}
 	commit, _, err := c.giteaClient.GetSingleCommit(namespace, req.Name, file.LastCommitSHA, gitea.SpeedUpOtions{
 		DisableStat:         true,
@@ -112,7 +116,7 @@ func (c *Client) GetRepoFileContents(ctx context.Context, req gitserver.GetRepoI
 		DisableFiles:        true,
 	})
 	if err != nil {
-		return nil, errors.New("failed to get dataset file last commit")
+		return nil, errors.New("failed to get repo file last commit")
 	}
 
 	file.Commit = types.Commit{
@@ -329,8 +333,7 @@ func (c *Client) getFileContents(owner, repo, ref, path string) (*types.File, er
 	*/
 	fileContent, _, err := c.giteaClient.GetContents(owner, repo, ref, path)
 	if err != nil {
-		slog.Error("Failed to get contents from gitea", slog.Any("error", err), slog.String("owner", owner), slog.String("repo", repo),
-			slog.String("ref", ref), slog.String("path", path))
+		slog.Error("Failed to get contents from gitea", slog.Any("error", err), slog.String("owner", owner), slog.String("repo", repo), slog.String("ref", ref), slog.String("path", path))
 		return nil, err
 	}
 	if fileContent.Content != nil {

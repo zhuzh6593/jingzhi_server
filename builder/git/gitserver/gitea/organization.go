@@ -4,10 +4,10 @@ import (
 	"errors"
 	"log/slog"
 
-	"caict.ac.cn/llm-server/builder/store/database"
-	"caict.ac.cn/llm-server/common/types"
-	"caict.ac.cn/llm-server/common/utils/common"
 	"github.com/OpenCSGs/gitea-go-sdk/gitea"
+	"opencsg.com/csghub-server/builder/store/database"
+	"opencsg.com/csghub-server/common/types"
+	"opencsg.com/csghub-server/common/utils/common"
 )
 
 // FixOrganization recreate organization data, ignore data duplication error
@@ -21,7 +21,7 @@ func (c *Client) FixOrganization(req *types.CreateOrgReq, user database.User) er
 			gitea.CreateOrgOption{
 				Name:        orgName,
 				Description: req.Description,
-				FullName:    req.FullName,
+				FullName:    req.Nickname,
 			},
 		)
 		if err != nil {
@@ -44,7 +44,7 @@ func (c *Client) CreateOrganization(req *types.CreateOrgReq, user database.User)
 			gitea.CreateOrgOption{
 				Name:        orgName,
 				Description: req.Description,
-				FullName:    req.FullName,
+				FullName:    req.Nickname,
 			},
 		)
 		if err != nil {
@@ -55,7 +55,7 @@ func (c *Client) CreateOrganization(req *types.CreateOrgReq, user database.User)
 
 	org = &database.Organization{
 		Name:        req.Name,
-		FullName:    req.FullName,
+		Nickname:    req.Nickname,
 		Description: req.Description,
 		User:        &user,
 		UserID:      user.ID,
@@ -76,6 +76,7 @@ func (c *Client) DeleteOrganization(name string) (err error) {
 	return
 }
 
+// TODO:remove param `originOrg`
 func (c *Client) UpdateOrganization(req *types.EditOrgReq, originOrg *database.Organization) (org *database.Organization, err error) {
 	orgNames := c.getTargetOrgs(req.Name)
 
@@ -83,17 +84,14 @@ func (c *Client) UpdateOrganization(req *types.EditOrgReq, originOrg *database.O
 		_, err = c.giteaClient.EditOrg(
 			orgName,
 			gitea.EditOrgOption{
-				FullName:    req.FullName,
-				Description: req.Description,
+				FullName:    *req.Nickname,
+				Description: *req.Description,
 			},
 		)
 		if err != nil {
 			return
 		}
 	}
-
-	originOrg.FullName = req.FullName
-	originOrg.Description = req.Description
 
 	return originOrg, nil
 }

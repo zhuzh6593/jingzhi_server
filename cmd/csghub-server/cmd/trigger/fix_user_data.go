@@ -6,10 +6,10 @@ import (
 	"log/slog"
 	"os"
 
-	"caict.ac.cn/llm-server/builder/store/database"
-	"caict.ac.cn/llm-server/common/config"
-	"caict.ac.cn/llm-server/component"
 	"github.com/spf13/cobra"
+	"opencsg.com/csghub-server/builder/store/database"
+	"opencsg.com/csghub-server/common/config"
+	"opencsg.com/csghub-server/user/component"
 )
 
 var fixUserDataCmd = &cobra.Command{

@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"time"
 
-	"caict.ac.cn/llm-server/api/httpbase"
-	"caict.ac.cn/llm-server/api/router"
-	"caict.ac.cn/llm-server/builder/deploy"
-	"caict.ac.cn/llm-server/builder/store/database"
-	"caict.ac.cn/llm-server/common/config"
-	"caict.ac.cn/llm-server/docs"
 	"github.com/spf13/cobra"
+	"opencsg.com/csghub-server/api/httpbase"
+	"opencsg.com/csghub-server/api/router"
+	"opencsg.com/csghub-server/builder/deploy"
+	"opencsg.com/csghub-server/builder/event"
+	"opencsg.com/csghub-server/builder/store/database"
+	"opencsg.com/csghub-server/common/config"
+	"opencsg.com/csghub-server/docs"
 )
 
 var enableSwagger bool
@@ -53,11 +54,18 @@ var serverCmd = &cobra.Command{
 			DSN:     cfg.Database.DSN,
 		}
 		database.InitDB(dbConfig)
+		err = event.InitEventPublisher(cfg)
+		if err != nil {
+			return fmt.Errorf("fail to initialize message queue, %w", err)
+		}
 		deploy.Init(deploy.DeployConfig{
-			ImageBuilderURL:    cfg.Space.BuilderEndpoint,
-			ImageRunnerURL:     cfg.Space.RunnerEndpoint,
-			MonitorInterval:    10 * time.Second,
-			InternalRootDomain: cfg.Space.InternalRootDomain,
+			ImageBuilderURL:         cfg.Space.BuilderEndpoint,
+			ImageRunnerURL:          cfg.Space.RunnerEndpoint,
+			MonitorInterval:         10 * time.Second,
+			InternalRootDomain:      cfg.Space.InternalRootDomain,
+			SpaceDeployTimeoutInMin: cfg.Space.DeployTimeoutInMin,
+			ModelDeployTimeoutInMin: cfg.Model.DeployTimeoutInMin,
+			ModelDownloadEndpoint:   cfg.Model.DownloadEndpoint,
 		})
 		r, err := router.NewRouter(cfg, enableSwagger)
 		if err != nil {

@@ -5,12 +5,17 @@ import (
 	"log/slog"
 	"os"
 
-	"caict.ac.cn/llm-server/cmd/csghub-server/cmd/deploy"
-	"caict.ac.cn/llm-server/cmd/csghub-server/cmd/logscan"
-	"caict.ac.cn/llm-server/cmd/csghub-server/cmd/migration"
-	"caict.ac.cn/llm-server/cmd/csghub-server/cmd/start"
-	"caict.ac.cn/llm-server/cmd/csghub-server/cmd/trigger"
 	"github.com/spf13/cobra"
+	"opencsg.com/csghub-server/cmd/csghub-server/cmd/accounting"
+	"opencsg.com/csghub-server/cmd/csghub-server/cmd/cron"
+	"opencsg.com/csghub-server/cmd/csghub-server/cmd/deploy"
+	"opencsg.com/csghub-server/cmd/csghub-server/cmd/logscan"
+	"opencsg.com/csghub-server/cmd/csghub-server/cmd/migration"
+	"opencsg.com/csghub-server/cmd/csghub-server/cmd/mirror"
+	"opencsg.com/csghub-server/cmd/csghub-server/cmd/start"
+	"opencsg.com/csghub-server/cmd/csghub-server/cmd/syncversion"
+	"opencsg.com/csghub-server/cmd/csghub-server/cmd/trigger"
+	"opencsg.com/csghub-server/cmd/csghub-server/cmd/user"
 )
 
 var (
@@ -46,6 +51,11 @@ func init() {
 		logscan.Cmd,
 		trigger.Cmd,
 		deploy.Cmd,
+		cron.Cmd,
+		mirror.Cmd,
+		accounting.Cmd,
+		syncversion.Cmd,
+		user.Cmd,
 	)
 }
 

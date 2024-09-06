@@ -4,9 +4,9 @@ import (
 	"context"
 	"log/slog"
 
-	"caict.ac.cn/llm-server/builder/git/gitserver"
-	"caict.ac.cn/llm-server/common/utils/common"
 	"github.com/OpenCSGs/gitea-go-sdk/gitea"
+	"opencsg.com/csghub-server/builder/git/gitserver"
+	"opencsg.com/csghub-server/common/utils/common"
 )
 
 const (
@@ -83,4 +83,30 @@ func (c *Client) DeleteRepo(ctx context.Context, req gitserver.DeleteRepoReq) er
 	giteaNamespace := common.WithPrefix(req.Namespace, repoPrefixByType(req.RepoType))
 	_, err := c.giteaClient.DeleteRepo(giteaNamespace, req.Name)
 	return err
+}
+
+func (c *Client) GetRepo(ctx context.Context, req gitserver.GetRepoReq) (*gitserver.CreateRepoResp, error) {
+	giteaRepo, _, err := c.giteaClient.GetRepo(
+		common.WithPrefix(req.Namespace, repoPrefixByType(req.RepoType)),
+		req.Name,
+	)
+	if err != nil {
+		slog.Error("fail to call get gitea repository", slog.Any("req", req), slog.String("error", err.Error()))
+		return nil, err
+	}
+
+	resp := &gitserver.CreateRepoResp{
+		Namespace:     req.Namespace,
+		Name:          req.Name,
+		Nickname:      giteaRepo.FullName,
+		Description:   giteaRepo.Description,
+		DefaultBranch: giteaRepo.DefaultBranch,
+		RepoType:      req.RepoType,
+		GitPath:       giteaRepo.FullName,
+		SshCloneURL:   giteaRepo.SSHURL,
+		HttpCloneURL:  portalCloneUrl(giteaRepo.CloneURL, req.RepoType, c.config.GitServer.URL, c.config.Frontend.URL),
+		Private:       giteaRepo.Private,
+	}
+
+	return resp, nil
 }

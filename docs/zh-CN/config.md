@@ -4,7 +4,7 @@
 | --- | --- | --- |
 | STARHUB_SERVER_INSTANCE_ID | none | 一个唯一的实例 ID，用于部署多个实例时做标识 |
 | STARHUB_SERVER_ENABLE_SWAGGER | false | 是否开启 Swagger 文档服务 |
-| STARHUB_SERVER_API_TOKEN | f3a7b9c1d6e5f8e2a1b5d4f9e6a2b8d7c3a4e2b1d9f6e7a8d2c5a7b4c1e3f5b8a1d4f9b7d6e2f8a5d3b1e7f9c6a8b2d1e4f7d5b6e9f2a4b3c8e1d7f995hd82hf | 用于和前端做身份校验的 API token |
+| STARHUB_SERVER_API_TOKEN | 0c11e6e4f2054444374ba3f0b70de4145935a7312289d404814cd5907c6aa93cc65cd35dbf94e04c13a3dedbf51f1694de84240c8acb7238b54a2c3ac8e87c59 | 用于和前端做身份校验的 API token，长度需要为 128 个字符 |
 | STARHUB_SERVER_SERVER_PORT | 8080 | Starhub Sever 启动后监听的端口 |
 | STARHUB_SERVER_SERVER_EXTERNAL_HOST | localhost | Starhub Server 启动后的 Host |
 | STARHUB_SERVER_SERVER_DOCS_HOST | `http://localhost:6636` | Swagger 启动后的 Host|

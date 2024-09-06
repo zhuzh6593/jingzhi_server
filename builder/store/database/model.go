@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
 	"time"
 
-	"caict.ac.cn/llm-server/common/types"
 	"github.com/uptrace/bun"
+	"opencsg.com/csghub-server/common/types"
 )
 
 type ModelStore struct {
@@ -29,48 +28,26 @@ type Model struct {
 	times
 }
 
-func (s *ModelStore) PublicToUser(ctx context.Context, user *User, search, sort string, tags []TagReq, per, page int) (models []Model, count int, err error) {
-	query := s.db.Operator.Core.
-		NewSelect().
+func (s *ModelStore) ByRepoIDs(ctx context.Context, repoIDs []int64) (models []Model, err error) {
+	err = s.db.Operator.Core.NewSelect().
 		Model(&models).
-		Relation("Repository.Tags")
+		Where("repository_id in (?)", bun.In(repoIDs)).
+		Scan(ctx)
 
-	if user != nil {
-		query = query.Where("repository.private = ? or repository.user_id = ?", false, user.ID)
-	} else {
-		query = query.Where("repository.private = ?", false)
-	}
-
-	if search != "" {
-		search = strings.ToLower(search)
-		query = query.Where(
-			"LOWER(repository.path) like ? or LOWER(repository.description) like ? or LOWER(repository.nickname) like ?",
-			fmt.Sprintf("%%%s%%", search),
-			fmt.Sprintf("%%%s%%", search),
-			fmt.Sprintf("%%%s%%", search),
-		)
-	}
-	// TODO：Optimize SQL
-	if len(tags) > 0 {
-		for _, tag := range tags {
-			query = query.Where("model.repository_id IN (SELECT repository_id FROM repository_tags JOIN tags ON repository_tags.tag_id = tags.id WHERE tags.category = ? AND tags.name = ?)", tag.Category, tag.Name)
-		}
-	}
-
-	count, err = query.Count(ctx)
-	if err != nil {
-		return
-	}
-
-	query = query.Order(fmt.Sprintf("repository.%s", sortBy[sort]))
-	query = query.Limit(per).
-		Offset((page - 1) * per)
-
-	err = query.Scan(ctx)
-	if err != nil {
-		return
-	}
 	return
+}
+
+func (s *ModelStore) ByRepoID(ctx context.Context, repoID int64) (*Model, error) {
+	var m Model
+	err := s.db.Core.NewSelect().
+		Model(&m).
+		Where("repository_id = ?", repoID).
+		Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find model by id, repository id: %d,error: %w", repoID, err)
+	}
+
+	return &m, nil
 }
 
 func (s *ModelStore) ByUsername(ctx context.Context, username string, per, page int, onlyPublic bool) (models []Model, total int, err error) {
@@ -84,6 +61,29 @@ func (s *ModelStore) ByUsername(ctx context.Context, username string, per, page 
 	if onlyPublic {
 		query = query.Where("repository.private = ?", false)
 	}
+	query = query.Order("model.created_at DESC").
+		Limit(per).
+		Offset((page - 1) * per)
+
+	err = query.Scan(ctx)
+	if err != nil {
+		return
+	}
+	total, err = query.Count(ctx)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (s *ModelStore) UserLikesModels(ctx context.Context, userID int64, per, page int) (models []Model, total int, err error) {
+	query := s.db.Operator.Core.
+		NewSelect().
+		Model(&models).
+		Relation("Repository.Tags").
+		Relation("Repository.User").
+		Where("repository.id in (select repo_id from user_likes where user_id=?)", userID)
+
 	query = query.Order("model.created_at DESC").
 		Limit(per).
 		Offset((page - 1) * per)
@@ -161,19 +161,18 @@ func (s *ModelStore) Create(ctx context.Context, input Model) (*Model, error) {
 }
 
 func (s *ModelStore) Update(ctx context.Context, input Model) (*Model, error) {
-	input.UpdatedAt = time.Now()
 	_, err := s.db.Core.NewUpdate().Model(&input).WherePK().Exec(ctx)
 
 	return &input, err
 }
 
-func (s *ModelStore) FindByPath(ctx context.Context, namespace string, repoPath string) (*Model, error) {
+func (s *ModelStore) FindByPath(ctx context.Context, namespace string, name string) (*Model, error) {
 	resModel := new(Model)
 	err := s.db.Operator.Core.
 		NewSelect().
 		Model(resModel).
 		Relation("Repository.User").
-		Where("repository.path =?", fmt.Sprintf("%s/%s", namespace, repoPath)).
+		Where("repository.path =?", fmt.Sprintf("%s/%s", namespace, name)).
 		Limit(1).
 		Scan(ctx)
 	if err != nil {
@@ -182,7 +181,9 @@ func (s *ModelStore) FindByPath(ctx context.Context, namespace string, repoPath 
 	err = s.db.Operator.Core.NewSelect().
 		Model(resModel.Repository).
 		WherePK().
-		Relation("Tags").
+		Relation("Tags", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("repository_tag.count > 0")
+		}).
 		Scan(ctx)
 	return resModel, err
 }
@@ -217,4 +218,32 @@ func (s *ModelStore) ListByPath(ctx context.Context, paths []string) ([]Model, e
 	}
 
 	return sortedModels, nil
+}
+
+func (s *ModelStore) ByID(ctx context.Context, id int64) (*Model, error) {
+	var model Model
+	err := s.db.Core.NewSelect().Model(&model).Relation("Repository").Where("model.id = ?", id).Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &model, err
+}
+
+func (s *ModelStore) CreateIfNotExist(ctx context.Context, input Model) (*Model, error) {
+	err := s.db.Core.NewSelect().
+		Model(&input).
+		Where("repository_id = ?", input.RepositoryID).
+		Relation("Repository").
+		Scan(ctx)
+	if err == nil {
+		return &input, nil
+	}
+
+	res, err := s.db.Core.NewInsert().Model(&input).Exec(ctx, &input)
+	if err := assertAffectedOneRow(res, err); err != nil {
+		slog.Error("create model in db failed", slog.String("error", err.Error()))
+		return nil, fmt.Errorf("create model in db failed,error:%w", err)
+	}
+
+	return &input, nil
 }

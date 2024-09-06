@@ -7,17 +7,17 @@ import (
 	"net/http"
 	"strings"
 
-	"caict.ac.cn/llm-server/api/httpbase"
-	"caict.ac.cn/llm-server/builder/deploy/common"
-	"caict.ac.cn/llm-server/builder/proxy"
-	"caict.ac.cn/llm-server/common/config"
-	"caict.ac.cn/llm-server/component"
 	"github.com/gin-gonic/gin"
+	"opencsg.com/csghub-server/api/httpbase"
+	"opencsg.com/csghub-server/builder/proxy"
+	"opencsg.com/csghub-server/common/config"
+	"opencsg.com/csghub-server/component"
 )
 
 type RProxyHandler struct {
 	SpaceRootDomain string
 	spaceComp       *component.SpaceComponent
+	repoComp        *component.RepoComponent
 }
 
 func NewRProxyHandler(config *config.Config) (*RProxyHandler, error) {
@@ -25,79 +25,65 @@ func NewRProxyHandler(config *config.Config) (*RProxyHandler, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create space component,%w", err)
 	}
+	repoComp, err := component.NewRepoComponent(config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create repo component,%w", err)
+	}
+
 	return &RProxyHandler{
 		SpaceRootDomain: config.Space.InternalRootDomain,
 		spaceComp:       spaceComp,
+		repoComp:        repoComp,
 	}, nil
 }
 
 func (r *RProxyHandler) Proxy(ctx *gin.Context) {
 	slog.Debug("http request", slog.Any("request", ctx.Request.URL), slog.Any("header", ctx.Request.Header))
 	host := ctx.Request.Host
-	// schema := "http"
-	// if IsWebSocketRequest(ctx.Request) {
-	// 	fmt.Println("===get ws req", *ctx.Request)
-	// 	schema = "ws"
-	// }
 	domainParts := strings.SplitN(host, ".", 2)
-	spaceAppName := domainParts[0]
-	// decode space id
-	spaceID, err := common.ParseUniqueSpaceAppName(spaceAppName)
+	appSrvName := domainParts[0]
+
+	deploy, err := r.repoComp.GetDeployBySvcName(ctx, appSrvName)
 	if err != nil {
-		slog.Info("proxy request has invalid space ID", slog.String("srv_name", spaceAppName), slog.Any("error", err))
-		ctx.Status(http.StatusNotFound)
+		slog.Error("failed to get deploy", slog.Any("error", err), slog.Any("appSrvName", appSrvName))
+		httpbase.ServerError(ctx, fmt.Errorf("failed to get deploy, %w", err))
 		return
 	}
 
-	// user verified by cookie
-	username, exists := ctx.Get("currentUser")
-	if !exists {
-		httpbase.BadRequest(ctx, "user not found, please login first")
-		return
+	username := httpbase.GetCurrentUser(ctx)
+	allow := false
+	err = nil
+	if deploy.SpaceID > 0 {
+		// user must login to visit space
+		if httpbase.GetAuthType(ctx) != httpbase.AuthTypeJwt {
+			httpbase.UnauthorizedError(ctx, errors.New("user not found in session, please access with jwt token first"))
+			return
+		}
+
+		// check space
+		allow, err = r.repoComp.AllowAccessByRepoID(ctx, deploy.RepoID, username)
+	} else if deploy.ModelID > 0 {
+		// check model inference
+		allow, err = r.repoComp.AllowAccessEndpoint(ctx, username, deploy)
 	}
 
-	allow, err := r.spaceComp.AllowCallApi(ctx, spaceID, username.(string))
 	if err != nil {
 		slog.Error("failed to check user permission", "error", err)
-		httpbase.ServerError(ctx, errors.New("failed to check user permission"))
+		httpbase.ServerError(ctx, fmt.Errorf("failed to check user permission,%w", err))
 		return
 	}
 
 	if allow {
 		apiname := ctx.Param("api")
-		// slog.Info("proxy space request", slog.String("namespace", namespace),
-		// 	slog.String("name", name), slog.Any("username", username),
-		// 	slog.String("api", apiname))
-		var rp *proxy.ReverseProxy
-		// fmt.Println(fmt.Sprintf("%s://%s.%s", schema, spaceAppName, r.SpaceRootDomain))
-		// rp, _ = proxy.NewReverseProxy(fmt.Sprintf("%s://%s.%s", schema, spaceAppName, r.SpaceRootDomain))
-		// fmt.Println(fmt.Sprintf("ws://%s.%s", spaceAppName, r.SpaceRootDomain))
-		//
-		//Special routing for graio app
-		if apiname == "queue/join" {
-			rp, _ = proxy.NewReverseProxy(fmt.Sprintf("ws://%s.%s", spaceAppName, r.SpaceRootDomain))
-		} else {
-			rp, _ = proxy.NewReverseProxy(fmt.Sprintf("http://%s.%s", spaceAppName, r.SpaceRootDomain))
+		target := fmt.Sprintf("http://%s.%s", appSrvName, r.SpaceRootDomain)
+		if deploy.Endpoint != "" {
+			//support multi-cluster
+			target = deploy.Endpoint
 		}
+		rp, _ := proxy.NewReverseProxy(target)
 		rp.ServeHTTP(ctx.Writer, ctx.Request, apiname)
 	} else {
-		slog.Info("user not allowed to call sapce api", slog.String("srv_name", spaceAppName), slog.Any("user_name", username))
+		slog.Warn("user not allowed to call endpoint api", slog.String("srv_name", appSrvName), slog.Any("user_name", username), slog.Any("deployID", deploy.ID))
 		ctx.Status(http.StatusForbidden)
 	}
-}
-
-func IsWebSocketRequest(r *http.Request) bool {
-	connHeader := ""
-	connHeaders := r.Header["Connection"]
-	if len(connHeaders) > 0 {
-		connHeader = connHeaders[0]
-	}
-
-	upgradeWebsocket := false
-	upgradeHeaders := r.Header["Upgrade"]
-	if len(upgradeHeaders) > 0 {
-		upgradeWebsocket = upgradeHeaders[0] == "websocket"
-	}
-
-	return strings.ToLower(connHeader) == "upgrade" && upgradeWebsocket
 }

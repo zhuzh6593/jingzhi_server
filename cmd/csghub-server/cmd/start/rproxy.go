@@ -3,11 +3,11 @@ package start
 import (
 	"fmt"
 
-	"caict.ac.cn/llm-server/api/httpbase"
-	"caict.ac.cn/llm-server/api/router"
-	"caict.ac.cn/llm-server/builder/store/database"
-	"caict.ac.cn/llm-server/common/config"
 	"github.com/spf13/cobra"
+	"opencsg.com/csghub-server/api/httpbase"
+	"opencsg.com/csghub-server/api/router"
+	"opencsg.com/csghub-server/builder/store/database"
+	"opencsg.com/csghub-server/common/config"
 )
 
 var rproxyCmd = &cobra.Command{

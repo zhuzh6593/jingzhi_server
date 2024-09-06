@@ -7,9 +7,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"caict.ac.cn/llm-server/builder/store/database"
 	"github.com/uptrace/bun"
 	"gopkg.in/yaml.v2"
+	"opencsg.com/csghub-server/builder/store/database"
 )
 
 type Tags struct {

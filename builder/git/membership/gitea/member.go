@@ -7,9 +7,9 @@ import (
 	"log/slog"
 	"net/http"
 
-	"caict.ac.cn/llm-server/builder/git/membership"
-	"caict.ac.cn/llm-server/common/utils/common"
 	"github.com/OpenCSGs/gitea-go-sdk/gitea"
+	"opencsg.com/csghub-server/builder/git/membership"
+	"opencsg.com/csghub-server/common/utils/common"
 )
 
 var _ membership.GitMemerShip = (*Client)(nil)

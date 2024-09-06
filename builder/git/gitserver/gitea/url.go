@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"caict.ac.cn/llm-server/common/types"
+	"opencsg.com/csghub-server/common/types"
 )
 
 func portalCloneUrl(url string, repoType types.RepositoryType, gitDomain, portalDomain string) string {

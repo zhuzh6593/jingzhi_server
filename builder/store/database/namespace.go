@@ -25,24 +25,21 @@ type Namespace struct {
 	UserID        int64         `bun:",notnull" json:"user_id"`
 	User          User          `bun:"rel:belongs-to,join:user_id=id" json:"user"`
 	NamespaceType NamespaceType `bun:",notnull" json:"namespace_type"`
+	Mirrored      bool          `bun:",notnull" json:"mirrored"`
 	times
 }
 
 func (s *NamespaceStore) FindByPath(ctx context.Context, path string) (namespace Namespace, err error) {
 	namespace.Path = path
-	err = s.db.Operator.Core.NewSelect().Model(&namespace).Where("path = ?", path).Scan(ctx)
+	err = s.db.Operator.Core.NewSelect().Model(&namespace).Relation("User").Where("path = ?", path).Scan(ctx)
 	return
 }
 
 func (s *NamespaceStore) Exists(ctx context.Context, path string) (exists bool, err error) {
 	var namespace Namespace
-	exists, err = s.db.Operator.Core.
+	return s.db.Operator.Core.
 		NewSelect().
 		Model(&namespace).
 		Where("path =?", path).
 		Exists(ctx)
-	if err != nil {
-		return
-	}
-	return
 }

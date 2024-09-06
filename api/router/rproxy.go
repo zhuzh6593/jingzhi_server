@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"caict.ac.cn/llm-server/api/handler"
-	"caict.ac.cn/llm-server/api/middleware"
-	"caict.ac.cn/llm-server/common/config"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
+	"opencsg.com/csghub-server/api/handler"
+	"opencsg.com/csghub-server/api/middleware"
+	"opencsg.com/csghub-server/common/config"
 )
 
 func NewRProxyRouter(config *config.Config) (*gin.Engine, error) {
@@ -26,10 +26,13 @@ func NewRProxyRouter(config *config.Config) (*gin.Engine, error) {
 	store := cookie.NewStore([]byte(config.Space.SessionSecretKey))
 	store.Options(sessions.Options{
 		SameSite: http.SameSiteNoneMode,
-		Secure:   true,
+		Secure:   config.EnableHTTPS,
 	})
 	r.Use(sessions.Sessions("jwt_session", store))
-	r.Use(middleware.BuildJwtSession(config))
+	//to access space with jwt token in query string
+	r.Use(middleware.BuildJwtSession(config.JWT.SigningKey))
+	//to access model,fintune with any kind of tokens in auth header
+	r.Use(middleware.Authenticator(config))
 
 	handler, err := handler.NewRProxyHandler(config)
 	if err != nil {

@@ -6,8 +6,8 @@ import (
 	"log"
 	"log/slog"
 
-	"caict.ac.cn/llm-server/common/config"
 	_ "github.com/marcboeker/go-duckdb"
+	"opencsg.com/csghub-server/common/config"
 )
 
 type Reader interface {

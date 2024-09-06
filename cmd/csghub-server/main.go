@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 
-	"caict.ac.cn/llm-server/cmd/csghub-server/cmd"
+	"opencsg.com/csghub-server/cmd/csghub-server/cmd"
 )
 
 func main() {

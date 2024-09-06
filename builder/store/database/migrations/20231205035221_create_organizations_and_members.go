@@ -3,8 +3,8 @@ package migrations
 import (
 	"context"
 
-	"caict.ac.cn/llm-server/builder/store/database"
 	"github.com/uptrace/bun"
+	"opencsg.com/csghub-server/builder/store/database"
 )
 
 var orgTables = []any{
