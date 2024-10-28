@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"opencsg.com/csghub-server/builder/store/database"
 	"opencsg.com/csghub-server/common/config"
+	"opencsg.com/csghub-server/common/types"
 	"opencsg.com/csghub-server/component"
 )
 
@@ -43,6 +44,11 @@ var cmdCreatePushMirror = &cobra.Command{
 		if !config.Saas {
 			return
 		}
+
+		if config.GitServer.Type != types.GitServerTypeGitea {
+			return
+		}
+
 		c, err := component.NewMirrorComponent(config)
 		if err != nil {
 			slog.Error("failed to create mirror component", "err", err)

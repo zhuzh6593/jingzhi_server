@@ -10,6 +10,7 @@ import (
 	"opencsg.com/csghub-server/builder/store/cache"
 	"opencsg.com/csghub-server/builder/store/database"
 	"opencsg.com/csghub-server/common/config"
+	"opencsg.com/csghub-server/common/types"
 	"opencsg.com/csghub-server/component"
 )
 
@@ -53,6 +54,11 @@ var checkMirrorProgress = &cobra.Command{
 			slog.Error("config not found in context")
 			return
 		}
+
+		if config.GitServer.Type != types.GitServerTypeGitea {
+			return
+		}
+
 		locker, err := cache.NewCache(ctx, cache.RedisConfig{
 			Addr:     config.Redis.Endpoint,
 			Username: config.Redis.User,

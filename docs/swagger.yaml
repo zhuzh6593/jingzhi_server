@@ -1,4 +1,107 @@
 definitions:
+  component.CreateCommentRequest:
+    properties:
+      commentable_id:
+        type: integer
+      commentable_type:
+        type: string
+      content:
+        type: string
+    required:
+    - content
+    type: object
+  component.CreateCommentResponse:
+    properties:
+      commentable_id:
+        type: integer
+      commentable_type:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      user:
+        $ref: '#/definitions/component.DiscussionResponse_User'
+    type: object
+  component.CreateDiscussionResponse:
+    properties:
+      comment_count:
+        description: |-
+          DiscussionableID   int64     `json:"discussionable_id"`
+          DiscussionableType string    `json:"discussionable_type"`
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+      user:
+        $ref: '#/definitions/component.DiscussionResponse_User'
+    type: object
+  component.CreateRepoDiscussionRequest:
+    properties:
+      title:
+        type: string
+    required:
+    - title
+    type: object
+  component.DiscussionResponse_Comment:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      user:
+        $ref: '#/definitions/component.DiscussionResponse_User'
+    type: object
+  component.DiscussionResponse_User:
+    properties:
+      avatar:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  component.ListRepoDiscussionResponse:
+    properties:
+      discussions:
+        items:
+          $ref: '#/definitions/component.CreateDiscussionResponse'
+        type: array
+    type: object
+  component.ShowDiscussionResponse:
+    properties:
+      comment_count:
+        type: integer
+      comments:
+        items:
+          $ref: '#/definitions/component.DiscussionResponse_Comment'
+        type: array
+      id:
+        type: integer
+      title:
+        type: string
+      user:
+        $ref: '#/definitions/component.DiscussionResponse_User'
+    type: object
+  component.UpdateCommentRequest:
+    properties:
+      content:
+        type: string
+    required:
+    - content
+    type: object
+  component.UpdateDiscussionRequest:
+    properties:
+      title:
+        type: string
+    required:
+    - title
+    type: object
   database.AccessToken:
     properties:
       application:
@@ -109,6 +212,10 @@ definitions:
         type: integer
       mirror_task_id:
         type: integer
+      next_execution_timestamp:
+        type: string
+      priority:
+        $ref: '#/definitions/types.MirrorPriority'
       progress:
         type: integer
       push_mirror_created:
@@ -141,6 +248,8 @@ definitions:
     type: object
   database.Model:
     properties:
+      base_model:
+        type: string
       created_at:
         type: string
       id:
@@ -181,6 +290,40 @@ definitions:
     x-enum-varnames:
     - UserNamespace
     - OrgNamespace
+  database.Organization:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      git_path:
+        type: string
+      homepage:
+        type: string
+      id:
+        type: integer
+      logo:
+        type: string
+      name:
+        type: string
+      namespace:
+        $ref: '#/definitions/database.Namespace'
+      namespace_id:
+        type: integer
+      org_type:
+        type: string
+      path:
+        description: unique name of the organization
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/database.User'
+      user_id:
+        type: integer
+      verified:
+        type: boolean
+    type: object
   database.Repository:
     properties:
       created_at:
@@ -264,6 +407,8 @@ definitions:
       content:
         type: string
       created_at:
+        type: string
+      fingerprint_sha256:
         type: string
       git_id:
         type: integer
@@ -389,6 +534,25 @@ definitions:
         description: TODO:add unique index after migration
         type: string
     type: object
+  handler.Create.addMemberRequest:
+    properties:
+      role:
+        type: string
+      users:
+        description: name of user will be added to the org as a member
+        example: user1,user2
+        type: string
+    required:
+    - role
+    - users
+    type: object
+  handler.Delete.removeMemberRequest:
+    properties:
+      role:
+        type: string
+    required:
+    - role
+    type: object
   handler.SetOpWeight.SetOpWeightReq:
     properties:
       repo_id:
@@ -398,6 +562,16 @@ definitions:
     required:
     - repo_id
     - weight
+    type: object
+  handler.Update.updateMemberRequest:
+    properties:
+      new_role:
+        type: string
+      old_role:
+        type: string
+    required:
+    - new_role
+    - old_role
     type: object
   telemetry.Counts:
     properties:
@@ -527,6 +701,8 @@ definitions:
         type: integer
       id:
         type: integer
+      license:
+        type: string
       likes:
         type: integer
       name:
@@ -560,6 +736,8 @@ definitions:
     type: object
   types.Collection:
     properties:
+      avatar:
+        type: string
       can_manage:
         type: boolean
       can_write:
@@ -573,6 +751,8 @@ definitions:
       likes:
         type: integer
       name:
+        type: string
+      namespace:
         type: string
       nickname:
         type: string
@@ -613,6 +793,8 @@ definitions:
         type: boolean
       repository_type:
         $ref: '#/definitions/types.RepositoryType'
+      status:
+        type: string
       tags:
         items:
           $ref: '#/definitions/types.RepoTag'
@@ -771,10 +953,19 @@ definitions:
         type: string
       content:
         type: string
+      current_user:
+        type: string
       message:
         type: string
       new_branch:
         type: string
+      original_content:
+        description: Use for lfs file
+        items:
+          type: integer
+        type: array
+      pointer:
+        $ref: '#/definitions/types.Pointer'
     type: object
   types.CreateFileResp:
     type: object
@@ -810,6 +1001,8 @@ definitions:
     properties:
       branch:
         type: string
+      current_user:
+        type: string
       description:
         type: string
       license:
@@ -839,6 +1032,8 @@ definitions:
     type: object
   types.CreateMirrorSourceReq:
     properties:
+      current_user:
+        type: string
       info_api_url:
         type: string
       source_name:
@@ -848,6 +1043,8 @@ definitions:
     type: object
   types.CreateModelReq:
     properties:
+      base_model:
+        type: string
       default_branch:
         example: main
         type: string
@@ -872,6 +1069,32 @@ definitions:
         type: boolean
       readme:
         type: string
+    type: object
+  types.CreateOrgReq:
+    properties:
+      description:
+        example: org description
+        type: string
+      homepage:
+        example: https://www.example.com
+        type: string
+      logo:
+        example: https://www.example.com/logo.png
+        type: string
+      name:
+        description: Org unique identifier
+        example: org_name_1
+        type: string
+      nickname:
+        description: Display name
+        example: org_display_name
+        type: string
+      org_type:
+        example: company or school etc
+        type: string
+      verified:
+        example: false
+        type: boolean
     type: object
   types.CreateSSHKeyRequest:
     properties:
@@ -931,15 +1154,12 @@ definitions:
     properties:
       cluster_id:
         type: string
-      cost_per_hour:
-        type: number
       name:
         type: string
       resources:
         type: string
     required:
     - cluster_id
-    - cost_per_hour
     - name
     - resources
     type: object
@@ -964,6 +1184,20 @@ definitions:
     required:
     - token
     type: object
+  types.CreateUserTokenRequest:
+    properties:
+      application:
+        allOf:
+        - $ref: '#/definitions/types.AccessTokenApp'
+        description: default to csghub
+      expired_at:
+        type: string
+      name:
+        type: string
+      permission:
+        description: default to empty, means full permission
+        type: string
+    type: object
   types.Dataset:
     properties:
       can_manage:
@@ -980,6 +1214,8 @@ definitions:
         type: integer
       id:
         type: integer
+      license:
+        type: string
       likes:
         type: integer
       name:
@@ -1034,6 +1270,22 @@ definitions:
       updated_at:
         type: string
     type: object
+  types.DeleteOrgReq:
+    type: object
+  types.DeleteUserTokenRequest:
+    properties:
+      application:
+        allOf:
+        - $ref: '#/definitions/types.AccessTokenApp'
+        description: default to csghub
+      expired_at:
+        type: string
+      name:
+        type: string
+      permission:
+        description: default to empty, means full permission
+        type: string
+    type: object
   types.DeployUpdateReq:
     properties:
       cluster_id:
@@ -1056,6 +1308,28 @@ definitions:
         type: integer
       secure_level:
         type: integer
+    type: object
+  types.EditOrgReq:
+    properties:
+      description:
+        example: org description
+        type: string
+      homepage:
+        example: https://www.example.com
+        type: string
+      logo:
+        example: https://www.example.com/logo.png
+        type: string
+      nickname:
+        description: Display name
+        example: org display name
+        type: string
+      org_type:
+        example: company or school etc
+        type: string
+      verified:
+        example: false
+        type: boolean
     type: object
   types.Event:
     properties:
@@ -1130,6 +1404,64 @@ definitions:
           type: string
         type: array
     type: object
+  types.Member:
+    properties:
+      avatar:
+        type: string
+      last_login_at:
+        type: string
+      nickname:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+      uuid:
+        type: string
+    type: object
+  types.Mirror:
+    properties:
+      access_token:
+        description: source access token
+        type: string
+      last_message:
+        type: string
+      last_updated_at:
+        type: string
+      local_repo_path:
+        type: string
+      mirror_source:
+        $ref: '#/definitions/types.MirrorSource'
+      progress:
+        type: integer
+      push_access_token:
+        type: string
+      push_url:
+        type: string
+      push_username:
+        type: string
+      repository:
+        $ref: '#/definitions/types.Repository'
+      source_repo_path:
+        type: string
+      source_url:
+        type: string
+      status:
+        $ref: '#/definitions/types.MirrorTaskStatus'
+      username:
+        description: source user name
+        type: string
+    type: object
+  types.MirrorPriority:
+    enum:
+    - 3
+    - 2
+    - 1
+    type: integer
+    x-enum-varnames:
+    - HighMirrorPriority
+    - MediumMirrorPriority
+    - LowMirrorPriority
   types.MirrorRepo:
     properties:
       path:
@@ -1141,10 +1473,16 @@ definitions:
       sync_status:
         $ref: '#/definitions/types.RepositorySyncStatus'
     type: object
+  types.MirrorSource:
+    properties:
+      source_name:
+        type: string
+    type: object
   types.MirrorTaskStatus:
     enum:
     - waiting
     - running
+    - repo_synced
     - finished
     - failed
     - incomplete
@@ -1152,11 +1490,14 @@ definitions:
     x-enum-varnames:
     - MirrorWaiting
     - MirrorRunning
+    - MirrorRepoSynced
     - MirrorFinished
     - MirrorFailed
     - MirrorIncomplete
   types.Model:
     properties:
+      base_model:
+        type: string
       can_manage:
         type: boolean
       can_write:
@@ -1175,6 +1516,8 @@ definitions:
         type: boolean
       id:
         type: integer
+      license:
+        type: string
       likes:
         type: integer
       name:
@@ -1300,8 +1643,19 @@ definitions:
       path:
         description: unique name of the organization
         type: string
+      user_id:
+        type: integer
       verified:
         type: boolean
+    type: object
+  types.Pointer:
+    properties:
+      download_url:
+        type: string
+      oid:
+        type: string
+      size:
+        type: integer
     type: object
   types.Relations:
     properties:
@@ -1400,6 +1754,13 @@ definitions:
         type: string
       total:
         type: integer
+    type: object
+  types.RuntimeArchitecture:
+    properties:
+      architectures:
+        items:
+          type: string
+        type: array
     type: object
   types.RuntimeFramework:
     properties:
@@ -1529,8 +1890,6 @@ definitions:
     type: object
   types.SpaceResource:
     properties:
-      cost_per_hour:
-        type: number
       id:
         type: integer
       is_available:
@@ -1620,6 +1979,13 @@ definitions:
         type: string
       origin_path:
         type: string
+      original_content:
+        description: Use for lfs file
+        items:
+          type: integer
+        type: array
+      pointer:
+        $ref: '#/definitions/types.Pointer'
       repoType:
         $ref: '#/definitions/types.RepositoryType'
       sha:
@@ -1640,6 +2006,8 @@ definitions:
     type: object
   types.UpdateMirrorSourceReq:
     properties:
+      current_user:
+        type: string
       id:
         type: integer
       info_api_url:
@@ -1651,6 +2019,8 @@ definitions:
     type: object
   types.UpdateModelReq:
     properties:
+      base_model:
+        type: string
       description:
         type: string
       nickname:
@@ -1689,8 +2059,6 @@ definitions:
     type: object
   types.UpdateSpaceResourceReq:
     properties:
-      cost_per_hour:
-        type: number
       name:
         type: string
       resources:
@@ -1705,6 +2073,37 @@ definitions:
       version:
         type: string
     type: object
+  types.UpdateUserRequest:
+    properties:
+      avatar:
+        type: string
+      bio:
+        type: string
+      email:
+        type: string
+      homepage:
+        type: string
+      name:
+        description: Display name of the user
+        type: string
+      new_username:
+        description: if use want to change username, this should be the only field
+          to send in request body
+        type: string
+      phone:
+        type: string
+      roles:
+        description: should be updated by admin
+        example:
+        - '[super_user'
+        - ' admin'
+        - ' personal_user]'
+        items:
+          type: string
+        type: array
+      uuid:
+        type: string
+    type: object
   types.User:
     properties:
       avatar:
@@ -1717,6 +2116,8 @@ definitions:
         type: string
       homepage:
         type: string
+      id:
+        type: integer
       last_login_at:
         type: string
       nickname:
@@ -1995,6 +2396,122 @@ paths:
       summary: Get all commits of repository
       tags:
       - Repository
+  /{repo_type}/{namespace}/{name}/discussions:
+    get:
+      consumes:
+      - application/json
+      description: list repo discussions
+      parameters:
+      - description: current user
+        in: query
+        name: current_user
+        type: string
+      - description: repository type
+        enum:
+        - models
+        - datasets
+        - codes
+        - spaces
+        in: path
+        name: repo_type
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name
+        in: query
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/component.ListRepoDiscussionResponse'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: List repo discussions
+      tags:
+      - Discussion
+    post:
+      consumes:
+      - application/json
+      description: create a new repo discussion
+      parameters:
+      - description: current user, the owner
+        in: query
+        name: current_user
+        required: true
+        type: string
+      - description: repository type
+        enum:
+        - models
+        - datasets
+        - codes
+        - spaces
+        in: path
+        name: repo_type
+        required: true
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/component.CreateRepoDiscussionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/component.CreateDiscussionResponse'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Create a new repo discussion
+      tags:
+      - Discussion
   /{repo_type}/{namespace}/{name}/download/{file_path}:
     get:
       consumes:
@@ -3501,6 +4018,31 @@ paths:
       summary: Get cluster list
       tags:
       - Cluster
+  /cluster/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get cluster by id
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Get cluster by id
+      tags:
+      - Cluster
   /codes:
     get:
       consumes:
@@ -4077,6 +4619,83 @@ paths:
       summary: Add repos to a collection
       tags:
       - Collection
+  /comments/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: delete a comment by id
+      parameters:
+      - description: the comment id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: current user, the owner of the comment
+        in: query
+        name: current_user
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Delete a comment by id
+      tags:
+      - Discussion
+    put:
+      consumes:
+      - application/json
+      description: update a comment content by id
+      parameters:
+      - description: the comment id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: current user, the owner of the comment
+        in: query
+        name: current_user
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/component.UpdateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Update a comment content by id
+      tags:
+      - Discussion
   /datasets:
     get:
       consumes:
@@ -4462,6 +5081,197 @@ paths:
       summary: Get the demo data of the dataset
       tags:
       - Dataset
+  /discussions/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: delete a discussion
+      parameters:
+      - description: the discussion id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: current user, the owner of the discussion
+        in: query
+        name: current_user
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Delete a discussion
+      tags:
+      - Discussion
+    get:
+      consumes:
+      - application/json
+      description: show a discussion
+      parameters:
+      - description: the discussion id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/component.ShowDiscussionResponse'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Show a discussion and its comments
+      tags:
+      - Discussion
+    put:
+      consumes:
+      - application/json
+      description: update a discussion
+      parameters:
+      - description: the discussion id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: current user, the owner
+        in: query
+        name: current_user
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/component.UpdateDiscussionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Update a discussion
+      tags:
+      - Discussion
+  /discussions/{id}/comments:
+    get:
+      consumes:
+      - application/json
+      description: list discussion comments
+      parameters:
+      - description: the discussion id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/component.DiscussionResponse_Comment'
+                  type: array
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: List discussion comments
+      tags:
+      - Discussion
+    post:
+      consumes:
+      - application/json
+      description: create a new discussion comment
+      parameters:
+      - description: the discussion id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/component.CreateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/component.CreateCommentResponse'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Create a new discussion comment
+      tags:
+      - Discussion
   /events:
     post:
       consumes:
@@ -4493,6 +5303,67 @@ paths:
       summary: Report client events
       tags:
       - Events
+  /jwt/{token}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: token
+        in: path
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.User'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: verify jwt token and return user info
+      tags:
+      - JWT
+  /jwt/token:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.CreateJWTReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.CreateJWTResp'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: generate jwt token for user
+      tags:
+      - JWT
   /list/datasets_by_path:
     post:
       consumes:
@@ -4852,6 +5723,50 @@ paths:
       security:
       - ApiKey: []
       summary: Update mirror source
+      tags:
+      - Mirror
+  /mirrors:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - default: 20
+        description: per
+        in: query
+        name: per
+        type: integer
+      - default: 1
+        description: page
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/types.Mirror'
+                  type: array
+                total:
+                  type: integer
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Get mirrors
       tags:
       - Mirror
   /models:
@@ -6021,6 +6936,712 @@ paths:
       summary: List repo runtime framework
       tags:
       - Repository
+  /namespace/{path}:
+    get:
+      consumes:
+      - application/json
+      description: get namespace info
+      parameters:
+      - description: namespace
+        in: path
+        name: path
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.Namespace'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Get namespace info [Internal Only].
+      tags:
+      - Namespace
+      - InternalOnly
+  /organization/{namespace}:
+    delete:
+      consumes:
+      - application/json
+      description: delete organization
+      parameters:
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: the op user
+        in: query
+        name: current_user
+        type: string
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.DeleteOrgReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Delete organization
+      tags:
+      - Organization
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: the op user
+        in: query
+        name: current_user
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.Organization'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Get organization info
+      tags:
+      - Organization
+    put:
+      consumes:
+      - application/json
+      description: update organization
+      parameters:
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: the op user
+        in: query
+        name: current_user
+        type: string
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.EditOrgReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/database.Organization'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Update organization
+      tags:
+      - Organization
+  /organization/{namespace}/codes:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: org name
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: current user name
+        in: query
+        name: current_user
+        required: true
+        type: string
+      - description: page size
+        in: query
+        name: per
+        type: integer
+      - description: current page number
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.ResponseWithTotal'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/types.Code'
+                  type: array
+                total:
+                  type: integer
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Get organization codes
+      tags:
+      - Organization
+  /organization/{namespace}/collections:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: org name
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: current user name
+        in: query
+        name: current_user
+        required: true
+        type: string
+      - description: page size
+        in: query
+        name: per
+        type: integer
+      - description: current page number
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.ResponseWithTotal'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/types.Collection'
+                  type: array
+                total:
+                  type: integer
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Get organization Collections
+      tags:
+      - Organization
+  /organization/{namespace}/datasets:
+    get:
+      consumes:
+      - application/json
+      description: get organization datasets
+      parameters:
+      - description: org name
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: current user name
+        in: query
+        name: current_user
+        required: true
+        type: string
+      - description: page size
+        in: query
+        name: per
+        type: integer
+      - description: current page number
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.ResponseWithTotal'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/types.Dataset'
+                  type: array
+                total:
+                  type: integer
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Get organization datasets
+      tags:
+      - Organization
+  /organization/{namespace}/members:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: the op user
+        in: query
+        name: current_user
+        type: string
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - default: 50
+        description: per
+        in: query
+        name: per
+        type: integer
+      - default: 1
+        description: per page
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.ResponseWithTotal'
+            - properties:
+                ' total':
+                  type: integer
+                data:
+                  $ref: '#/definitions/types.Member'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Get organization members. Org member can get more details.
+      tags:
+      - Member
+    post:
+      consumes:
+      - application/json
+      description: user will be added to org with a role
+      parameters:
+      - description: org name
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: the op user
+        in: query
+        name: current_user
+        type: string
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.Create.addMemberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Create new membership between org and user
+      tags:
+      - Member
+  /organization/{namespace}/members/{username}:
+    delete:
+      consumes:
+      - application/json
+      description: user's role will be remove from org
+      parameters:
+      - description: org name
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: user name
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: the op user
+        in: query
+        name: current_user
+        type: string
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.Delete.removeMemberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Remove membership between org and user
+      tags:
+      - Member
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: org name
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: user name
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: the op user
+        in: query
+        name: current_user
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Get user's role in an org
+      tags:
+      - Member
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: org name
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: user name
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: the op user
+        in: query
+        name: current_user
+        type: string
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.Update.updateMemberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: update user membership
+      tags:
+      - Member
+  /organization/{namespace}/models:
+    get:
+      consumes:
+      - application/json
+      description: get organization models
+      parameters:
+      - description: org name
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: current user name
+        in: query
+        name: current_user
+        required: true
+        type: string
+      - description: page size
+        in: query
+        name: per
+        type: integer
+      - description: current page number
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.ResponseWithTotal'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/types.Model'
+                  type: array
+                total:
+                  type: integer
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Get organization models
+      tags:
+      - Organization
+  /organization/{namespace}/spaces:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: org name
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: current user name
+        in: query
+        name: current_user
+        required: true
+        type: string
+      - description: page size
+        in: query
+        name: per
+        type: integer
+      - description: current page number
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.ResponseWithTotal'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/types.Space'
+                  type: array
+                total:
+                  type: integer
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Get organization Spaces
+      tags:
+      - Organization
+  /organizations:
+    get:
+      consumes:
+      - application/json
+      description: get organizations
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/types.Organization'
+                  type: array
+              type: object
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Get organizations
+      tags:
+      - Organization
+    post:
+      consumes:
+      - application/json
+      description: create a new organization
+      parameters:
+      - description: the op user
+        in: query
+        name: current_user
+        type: string
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.CreateOrgReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.Organization'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Create a new organization
+      tags:
+      - Organization
   /recom/opweight:
     post:
       consumes:
@@ -6181,6 +7802,109 @@ paths:
       summary: Set model runtime frameworks
       tags:
       - RuntimeFramework
+  /runtime_framework/{id}/architecture:
+    delete:
+      consumes:
+      - application/json
+      description: Delete runtime framework architectures
+      parameters:
+      - description: runtime framework id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.RuntimeArchitecture'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Delete runtime framework architectures
+      tags:
+      - RuntimeFramework
+    get:
+      consumes:
+      - application/json
+      description: get runtime framework architectures
+      parameters:
+      - description: runtime framework id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Get runtime framework architectures
+      tags:
+      - RuntimeFramework
+    put:
+      consumes:
+      - application/json
+      description: set runtime framework architectures
+      parameters:
+      - description: runtime framework id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.RuntimeArchitecture'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Set runtime framework architectures
+      tags:
+      - RuntimeFramework
   /runtime_framework/{id}/models:
     get:
       consumes:
@@ -6233,6 +7957,51 @@ paths:
       security:
       - ApiKey: []
       summary: Get Visible models by runtime framework for current user
+      tags:
+      - RuntimeFramework
+  /runtime_framework/{id}/scan:
+    post:
+      consumes:
+      - application/json
+      description: Scan runtime architecture
+      parameters:
+      - description: runtime framework id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: scan_type(0:all models, 1:new models, 2:old models)
+        enum:
+        - 0
+        - 1
+        - 2
+        in: query
+        name: scan_type
+        type: integer
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.RuntimeFrameworkModels'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Scan runtime architecture
       tags:
       - RuntimeFramework
   /runtime_framework/models:
@@ -7199,6 +8968,308 @@ paths:
       summary: Submit telemetry data for a client
       tags:
       - Telemetry
+  /token/{app}/{token_name}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: application
+        enum:
+        - git
+        - starship
+        in: path
+        name: app
+        required: true
+        type: string
+      - description: token_name
+        in: path
+        name: token_name
+        required: true
+        type: string
+      - description: current user, the owner
+        in: query
+        name: current_user
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Delete access token of a app
+      tags:
+      - Access token
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: token name
+        in: path
+        name: token_name
+        required: true
+        type: string
+      - description: application
+        enum:
+        - git
+        - starship
+        in: path
+        name: app
+        required: true
+        type: string
+      - description: current user, the owner
+        in: query
+        name: current_user
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.CreateUserTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/database.AccessToken'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Create access token for an special application
+      tags:
+      - Access token
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: application
+        enum:
+        - git
+        - starship
+        in: path
+        name: app
+        required: true
+        type: string
+      - description: token_name
+        in: path
+        name: token_name
+        required: true
+        type: string
+      - description: current user, the owner
+        in: query
+        name: current_user
+        required: true
+        type: string
+      - description: new expire time, in format RFC3339, like 2006-01-02T15:04:05Z07:00
+        in: query
+        name: expired_at
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Refresh a access token for a user
+      tags:
+      - Access token
+  /token/{token_value}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: token_value
+        in: path
+        name: token_value
+        required: true
+        type: string
+      - description: application
+        enum:
+        - git
+        - starship
+        in: query
+        name: app
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Get token and owner's detail by the token value
+      tags:
+      - Access token
+  /user/{username}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: username
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: current user
+        in: query
+        name: current_user
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Delete user
+      tags:
+      - User
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: username
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: current user
+        in: query
+        name: current_user
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.User'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Get user info. Admin and the user self can see full info, other users
+        can only see basic info.
+      tags:
+      - User
+    put:
+      consumes:
+      - application/json
+      description: update user
+      parameters:
+      - description: username
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: current user
+        in: query
+        name: current_user
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Update user. If change user name, should only send 'new_username' in
+        the request body.
+      tags:
+      - User
   /user/{username}/codes:
     get:
       consumes:
@@ -8003,6 +10074,139 @@ paths:
       summary: Create a new SSH key for the given user
       tags:
       - SSH Key
+  /user/{username}/tokens:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: username
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: current user name
+        in: query
+        name: current_user
+        type: string
+      - description: application
+        enum:
+        - git
+        - starship
+        in: query
+        name: app
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: Get all access tokens for a user
+      tags:
+      - Access token
+    post:
+      consumes:
+      - application/json
+      description: create access token for a user
+      parameters:
+      - description: username
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: current user, the owner
+        in: query
+        name: current_user
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.CreateUserTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/database.AccessToken'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: '[Deprecated: use POST:/token/{app}/{username} instead]'
+      tags:
+      - Access token
+  /user/{username}/tokens/{token_name}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: username
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: token_name
+        in: path
+        name: token_name
+        required: true
+        type: string
+      - description: current user, the owner
+        in: query
+        name: current_user
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.DeleteUserTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/types.APIBadRequest'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/types.APIInternalServerError'
+      security:
+      - ApiKey: []
+      summary: '[Deprecated: use DELETE:/token/{app}/{token_name} instead]'
+      tags:
+      - Access token
 securityDefinitions:
   ApiKey:
     description: Bearer token

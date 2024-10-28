@@ -10,12 +10,12 @@ import (
 	"strconv"
 
 	"opencsg.com/csghub-server/builder/deploy"
-	deployStatus "opencsg.com/csghub-server/builder/deploy/common"
 	"opencsg.com/csghub-server/builder/git/gitserver"
 	"opencsg.com/csghub-server/builder/inference"
 	"opencsg.com/csghub-server/builder/store/database"
 	"opencsg.com/csghub-server/common/config"
 	"opencsg.com/csghub-server/common/types"
+	"opencsg.com/csghub-server/common/utils/common"
 )
 
 const modelGitattributesContent = `*.7z filter=lfs diff=lfs merge=lfs -text
@@ -95,18 +95,10 @@ type ModelComponent struct {
 
 func (c *ModelComponent) Index(ctx context.Context, filter *types.RepoFilter, per, page int) ([]types.Model, int, error) {
 	var (
-		user      database.User
 		err       error
 		resModels []types.Model
 	)
-	if filter.Username != "" {
-		user, err = c.user.FindByUsername(ctx, filter.Username)
-		if err != nil {
-			newError := fmt.Errorf("failed to get current user,error:%w", err)
-			return nil, 0, newError
-		}
-	}
-	repos, total, err := c.rs.PublicToUser(ctx, types.ModelRepo, user.ID, filter, per, page)
+	repos, total, err := c.PublicToUser(ctx, types.ModelRepo, filter.Username, filter, per, page)
 	if err != nil {
 		newError := fmt.Errorf("failed to get public model repos,error:%w", err)
 		return nil, 0, newError
@@ -160,10 +152,8 @@ func (c *ModelComponent) Index(ctx context.Context, filter *types.RepoFilter, pe
 			UpdatedAt:    repo.UpdatedAt,
 			Source:       repo.Source,
 			SyncStatus:   repo.SyncStatus,
-			Repository: types.Repository{
-				HTTPCloneURL: repo.HTTPCloneURL,
-				SSHCloneURL:  repo.SSHCloneURL,
-			},
+			License:      repo.License,
+			Repository:   common.BuildCloneInfo(c.config, model.Repository),
 		})
 	}
 	return resModels, total, nil
@@ -184,6 +174,10 @@ func (c *ModelComponent) Create(ctx context.Context, req *types.CreateModelReq) 
 	} else {
 		nickname = req.Name
 	}
+
+	if req.DefaultBranch == "" {
+		req.DefaultBranch = "main"
+	}
 	req.Nickname = nickname
 	req.RepoType = types.ModelRepo
 	req.Readme = generateReadmeData(req.License)
@@ -195,6 +189,7 @@ func (c *ModelComponent) Create(ctx context.Context, req *types.CreateModelReq) 
 	dbModel := database.Model{
 		Repository:   dbRepo,
 		RepositoryID: dbRepo.ID,
+		BaseModel:    req.BaseModel,
 	}
 
 	model, err := c.ms.Create(ctx, dbModel)
@@ -255,11 +250,8 @@ func (c *ModelComponent) Create(ctx context.Context, req *types.CreateModelReq) 
 		Downloads:    model.Repository.DownloadCount,
 		Path:         model.Repository.Path,
 		RepositoryID: model.RepositoryID,
-		Repository: types.Repository{
-			HTTPCloneURL: model.Repository.HTTPCloneURL,
-			SSHCloneURL:  model.Repository.SSHCloneURL,
-		},
-		Private: model.Repository.Private,
+		Repository:   common.BuildCloneInfo(c.config, model.Repository),
+		Private:      model.Repository.Private,
 		User: &types.User{
 			Username: user.Username,
 			Nickname: user.NickName,
@@ -268,6 +260,8 @@ func (c *ModelComponent) Create(ctx context.Context, req *types.CreateModelReq) 
 		Tags:      tags,
 		CreatedAt: model.CreatedAt,
 		UpdatedAt: model.UpdatedAt,
+		BaseModel: model.BaseModel,
+		License:   model.Repository.License,
 	}
 
 	return resModel, nil
@@ -281,7 +275,7 @@ func buildCreateFileReq(p *types.CreateFileParams, repoType types.RepositoryType
 		Branch:    p.Branch,
 		Content:   base64.StdEncoding.EncodeToString([]byte(p.Content)),
 		NewBranch: p.Branch,
-		NameSpace: p.Namespace,
+		Namespace: p.Namespace,
 		Name:      p.Name,
 		FilePath:  p.FilePath,
 		RepoType:  repoType,
@@ -300,6 +294,9 @@ func (c *ModelComponent) Update(ctx context.Context, req *types.UpdateModelReq) 
 		return nil, fmt.Errorf("failed to find model, error: %w", err)
 	}
 
+	if req.BaseModel != nil {
+		model.BaseModel = *req.BaseModel
+	}
 	model, err = c.ms.Update(ctx, *model)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update database model, error: %w", err)
@@ -316,6 +313,7 @@ func (c *ModelComponent) Update(ctx context.Context, req *types.UpdateModelReq) 
 		Private:      dbRepo.Private,
 		CreatedAt:    model.CreatedAt,
 		UpdatedAt:    model.UpdatedAt,
+		BaseModel:    model.BaseModel,
 	}
 
 	return resModel, nil
@@ -393,12 +391,9 @@ func (c *ModelComponent) Show(ctx context.Context, namespace, name, currentUser 
 		Path:          model.Repository.Path,
 		RepositoryID:  model.Repository.ID,
 		DefaultBranch: model.Repository.DefaultBranch,
-		Repository: types.Repository{
-			HTTPCloneURL: model.Repository.HTTPCloneURL,
-			SSHCloneURL:  model.Repository.SSHCloneURL,
-		},
-		Private: model.Repository.Private,
-		Tags:    tags,
+		Repository:    common.BuildCloneInfo(c.config, model.Repository),
+		Private:       model.Repository.Private,
+		Tags:          tags,
 		User: &types.User{
 			Username: model.Repository.User.Username,
 			Nickname: model.Repository.User.NickName,
@@ -411,9 +406,12 @@ func (c *ModelComponent) Show(ctx context.Context, namespace, name, currentUser 
 		UserLikes:  likeExists,
 		Source:     model.Repository.Source,
 		SyncStatus: model.Repository.SyncStatus,
-		CanWrite:   permission.CanWrite,
-		CanManage:  permission.CanAdmin,
-		Namespace:  ns,
+		BaseModel:  model.BaseModel,
+		License:    model.Repository.License,
+
+		CanWrite:  permission.CanWrite,
+		CanManage: permission.CanAdmin,
+		Namespace: ns,
 	}
 	inferences, _ := c.rrtfms.GetByRepoIDsAndType(ctx, model.Repository.ID, types.InferenceType)
 	if len(inferences) > 0 {
@@ -442,23 +440,7 @@ func (c *ModelComponent) GetServerless(ctx context.Context, namespace, name, cur
 	if deploy == nil {
 		return nil, nil
 	}
-	var endpoint string
-	if len(deploy.SvcName) > 0 && deploy.Status == deployStatus.Running {
-		cls, err := c.cluster.ByClusterID(ctx, deploy.ClusterID)
-		zone := ""
-		provider := ""
-		if err != nil {
-			return nil, fmt.Errorf("get cluster with error: %w", err)
-		} else {
-			zone = cls.Zone
-			provider = cls.Provider
-		}
-		regionDomain := ""
-		if len(zone) > 0 && len(provider) > 0 {
-			regionDomain = fmt.Sprintf(".%s.%s", zone, provider)
-		}
-		endpoint = fmt.Sprintf("%s%s.%s", deploy.SvcName, regionDomain, c.publicRootDomain)
-	}
+	endpoint, _ := c.generateEndpoint(ctx, deploy)
 
 	resDeploy := types.DeployRepo{
 		DeployID:         deploy.ID,
@@ -513,12 +495,21 @@ func (c *ModelComponent) SDKModelInfo(ctx context.Context, namespace, name, ref,
 	for _, filePath := range filePaths {
 		sdkFiles = append(sdkFiles, types.SDKFile{Filename: filePath})
 	}
-	lastCommit, _ := c.LastCommit(ctx, &types.GetCommitsReq{
+
+	if ref == "" {
+		ref = model.Repository.DefaultBranch
+	}
+	getLastCommitReq := gitserver.GetRepoLastCommitReq{
 		Namespace: namespace,
 		Name:      name,
 		Ref:       ref,
 		RepoType:  types.ModelRepo,
-	})
+	}
+	lastCommit, err := c.git.GetRepoLastCommit(ctx, getLastCommitReq)
+	if err != nil {
+		slog.Error("failed to get last commit", slog.String("namespace", namespace), slog.String("name", name), slog.String("ref", ref), slog.Any("error", err))
+		return nil, fmt.Errorf("failed to get last commit, error: %w", err)
+	}
 
 	relatedRepos, _ := c.relatedRepos(ctx, model.RepositoryID, currentUser)
 	relatedSpaces := relatedRepos[types.SpaceRepo]
@@ -730,7 +721,6 @@ func (c *ModelComponent) Deploy(ctx context.Context, deployReq types.DeployActRe
 		MinReplica:       req.MinReplica,
 		MaxReplica:       req.MaxReplica,
 		Annotation:       string(annoStr),
-		CostPerHour:      resource.CostPerHour,
 		ClusterID:        req.ClusterID,
 		SecureLevel:      req.SecureLevel,
 		Type:             deployReq.DeployType,
@@ -875,15 +865,20 @@ func (c *ModelComponent) ListModelsOfRuntimeFrameworks(ctx context.Context, curr
 		newError := fmt.Errorf("failed to get public model repos, error:%w", err)
 		return nil, 0, newError
 	}
+	// define EnableInference
+	enableInference := deployType == types.InferenceType
+	enableFinetune := deployType == types.FinetuneType
 
 	for _, repo := range repos {
 		resModels = append(resModels, types.Model{
-			Name:         repo.Name,
-			Nickname:     repo.Nickname,
-			Description:  repo.Description,
-			Path:         repo.Path,
-			RepositoryID: repo.ID,
-			Private:      repo.Private,
+			Name:            repo.Name,
+			Nickname:        repo.Nickname,
+			Description:     repo.Description,
+			Path:            repo.Path,
+			RepositoryID:    repo.ID,
+			Private:         repo.Private,
+			EnableInference: enableInference,
+			EnableFinetune:  enableFinetune,
 		})
 	}
 	return resModels, total, nil

@@ -11,7 +11,9 @@ import (
 	"opencsg.com/csghub-server/builder/event"
 	"opencsg.com/csghub-server/builder/store/database"
 	"opencsg.com/csghub-server/common/config"
+	"opencsg.com/csghub-server/common/types"
 	"opencsg.com/csghub-server/docs"
+	"opencsg.com/csghub-server/mirror"
 )
 
 var enableSwagger bool
@@ -66,6 +68,7 @@ var serverCmd = &cobra.Command{
 			SpaceDeployTimeoutInMin: cfg.Space.DeployTimeoutInMin,
 			ModelDeployTimeoutInMin: cfg.Model.DeployTimeoutInMin,
 			ModelDownloadEndpoint:   cfg.Model.DownloadEndpoint,
+			PublicRootDomain:        cfg.Space.PublicRootDomain,
 		})
 		r, err := router.NewRouter(cfg, enableSwagger)
 		if err != nil {
@@ -77,6 +80,17 @@ var serverCmd = &cobra.Command{
 			},
 			r,
 		)
+
+		// Initialize mirror service
+		mirrorService, err := mirror.NewMirrorPriorityQueue(cfg)
+		if err != nil {
+			return fmt.Errorf("failed to init mirror service: %w", err)
+		}
+
+		if cfg.MirrorServer.Enable && cfg.GitServer.Type == types.GitServerTypeGitaly {
+			mirrorService.EnqueueMirrorTasks()
+		}
+
 		server.Run()
 
 		return nil

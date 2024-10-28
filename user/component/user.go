@@ -8,9 +8,11 @@ import (
 	"log/slog"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/casdoor/casdoor-go-sdk/casdoorsdk"
+	"github.com/google/uuid"
 	"opencsg.com/csghub-server/builder/git"
 	"opencsg.com/csghub-server/builder/git/gitserver"
 	"opencsg.com/csghub-server/builder/store/database"
@@ -19,11 +21,12 @@ import (
 )
 
 type UserComponent struct {
-	us   *database.UserStore
-	os   *database.OrgStore
-	ns   *database.NamespaceStore
-	gs   gitserver.GitServer
-	jwtc *JwtComponent
+	us     *database.UserStore
+	os     *database.OrgStore
+	ns     *database.NamespaceStore
+	gs     gitserver.GitServer
+	jwtc   *JwtComponent
+	tokenc *AccessTokenComponent
 
 	casc      *casdoorsdk.Client
 	casConfig *casdoorsdk.AuthConfig
@@ -38,6 +41,10 @@ func NewUserComponent(config *config.Config) (*UserComponent, error) {
 	c.os = database.NewOrgStore()
 	c.ns = database.NewNamespaceStore()
 	c.jwtc = NewJwtComponent(config.JWT.SigningKey, config.JWT.ValidHour)
+	c.tokenc, err = NewAccessTokenComponent(config)
+	if err != nil {
+		return nil, fmt.Errorf("fail to create access token component, error: %w", err)
+	}
 	c.gs, err = git.NewGitServer(config)
 	if err != nil {
 		newError := fmt.Errorf("failed to create git server,error:%w", err)
@@ -109,6 +116,7 @@ func (c *UserComponent) createFromCasdoorUser(ctx context.Context, cu casdoorsdk
 	user := &database.User{
 		Username:    userName,
 		NickName:    userName,
+		Email:       email,
 		UUID:        cu.Id,
 		RegProvider: "casdoor",
 		Gender:      cu.Gender,
@@ -126,7 +134,6 @@ func (c *UserComponent) createFromCasdoorUser(ctx context.Context, cu casdoorsdk
 	}
 	if gsUserResp != nil {
 		user.GitID = gsUserResp.GitID
-		user.Email = gsUserResp.Email
 		user.Password = gsUserResp.Password
 	}
 	err = c.us.Create(ctx, user, namespace)
@@ -366,6 +373,7 @@ func (c *UserComponent) Get(ctx context.Context, userName, visitorName string) (
 	}
 
 	if !onlyBasicInfo {
+		u.ID = dbuser.ID
 		u.Email = dbuser.Email
 		u.UUID = dbuser.UUID
 		u.Bio = dbuser.Bio
@@ -388,6 +396,7 @@ func (c *UserComponent) Get(ctx context.Context, userName, visitorName string) (
 				Logo:     org.Logo,
 				OrgType:  org.OrgType,
 				Verified: org.Verified,
+				UserID:   org.UserID,
 			})
 		}
 	}
@@ -413,16 +422,39 @@ func (c *UserComponent) Signin(ctx context.Context, code, state string) (*types.
 		return nil, "", fmt.Errorf("failed to check user existance by name in db,error:%w", err)
 	}
 
+	var dbu *database.User
 	if !exists {
-		_, err = c.createFromCasdoorUser(ctx, cu)
+		dbu, err = c.createFromCasdoorUser(ctx, cu)
 		if err != nil {
 			return nil, "", fmt.Errorf("failed to create user,error:%w", err)
 		}
-	}
-	// get user from db for username, as casdoor may have different username
-	dbu, err := c.us.FindByUUID(ctx, cu.Id)
-	if err != nil {
-		return nil, "", fmt.Errorf("failed to find user by uuid in db, uuid:%s, error:%w", cu.Id, err)
+		// auto create git access token for the new user
+		go func(username string) {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			defer cancel()
+			_, err := c.tokenc.Create(ctx, &types.CreateUserTokenRequest{
+				Username:    username,
+				TokenName:   uuid.NewString(),
+				Application: types.AccessTokenAppGit,
+			})
+			if err != nil {
+				slog.Error("failed to create git user access token", "error", err, "username", dbu.Username)
+			}
+		}(dbu.Username)
+	} else {
+		// get user from db for username, as casdoor may have different username
+		dbu, err = c.us.FindByUUID(ctx, cu.Id)
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to find user by uuid in db, uuid:%s, error:%w", cu.Id, err)
+		}
+		// update user login time asynchronously
+		go func() {
+			dbu.LastLoginAt = time.Now().Format("2006-01-02 15:04:05")
+			err := c.us.Update(ctx, dbu)
+			if err != nil {
+				slog.Error("failed to update user login time", "error", err, "username", dbu.Username)
+			}
+		}()
 	}
 	hubToken, signed, err := c.jwtc.GenerateToken(ctx, types.CreateJWTReq{
 		UUID:        dbu.UUID,

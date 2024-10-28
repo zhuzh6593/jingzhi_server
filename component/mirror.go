@@ -2,6 +2,8 @@ package component
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 	"path"
@@ -15,23 +17,29 @@ import (
 	"opencsg.com/csghub-server/builder/store/s3"
 	"opencsg.com/csghub-server/common/config"
 	"opencsg.com/csghub-server/common/types"
+	"opencsg.com/csghub-server/common/utils/common"
+	"opencsg.com/csghub-server/mirror/queue"
 )
 
 type MirrorComponent struct {
-	mirrorStore       *database.MirrorStore
-	repoStore         *database.RepoStore
-	modelStore        *database.ModelStore
-	datasetStore      *database.DatasetStore
-	codeStore         *database.CodeStore
-	repoComp          *RepoComponent
-	tokenStore        *database.GitServerAccessTokenStore
-	mirrorSourceStore *database.MirrorSourceStore
-	mirrorServer      mirrorserver.MirrorServer
-	namespaceStore    *database.NamespaceStore
-	git               gitserver.GitServer
-	s3Client          *minio.Client
-	lfsBucket         string
-	saas              bool
+	tokenStore         *database.GitServerAccessTokenStore
+	mirrorServer       mirrorserver.MirrorServer
+	saas               bool
+	repoComp           *RepoComponent
+	git                gitserver.GitServer
+	s3Client           *minio.Client
+	lfsBucket          string
+	modelStore         *database.ModelStore
+	datasetStore       *database.DatasetStore
+	codeStore          *database.CodeStore
+	repoStore          *database.RepoStore
+	mirrorStore        *database.MirrorStore
+	mirrorSourceStore  *database.MirrorSourceStore
+	namespaceStore     *database.NamespaceStore
+	lfsMetaObjectStore *database.LfsMetaObjectStore
+	userStore          *database.UserStore
+	config             *config.Config
+	mq                 *queue.PriorityQueue
 }
 
 func NewMirrorComponent(config *config.Config) (*MirrorComponent, error) {
@@ -42,6 +50,10 @@ func NewMirrorComponent(config *config.Config) (*MirrorComponent, error) {
 		newError := fmt.Errorf("fail to create git mirror server,error:%w", err)
 		slog.Error(newError.Error())
 		return nil, newError
+	}
+	c.mq, err = queue.GetPriorityQueueInstance()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get priority queue: %v", err)
 	}
 	c.repoComp, err = NewRepoComponent(config)
 	if err != nil {
@@ -68,7 +80,10 @@ func NewMirrorComponent(config *config.Config) (*MirrorComponent, error) {
 	c.tokenStore = database.NewGitServerAccessTokenStore()
 	c.mirrorSourceStore = database.NewMirrorSourceStore()
 	c.namespaceStore = database.NewNamespaceStore()
+	c.lfsMetaObjectStore = database.NewLfsMetaObjectStore()
+	c.userStore = database.NewUserStore()
 	c.saas = config.Saas
+	c.config = config
 	return c, nil
 }
 
@@ -114,14 +129,21 @@ func (c *MirrorComponent) CreateMirrorRepo(ctx context.Context, req types.Create
 	var username string
 	namespace := c.mapNamespaceAndName(req.SourceNamespace)
 	name := req.SourceName
-	repo, err := c.repoStore.FindByPath(ctx, req.RepoType, namespace, name)
+	user, err := c.userStore.FindByUsername(ctx, req.CurrentUser)
 	if err != nil {
+		return nil, errors.New("user does not exist")
+	}
+	if !user.CanAdmin() {
+		return nil, errors.New("user does not have admin permission")
+	}
+	repo, err := c.repoStore.FindByPath(ctx, req.RepoType, namespace, name)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("failed to check repo existance, error: %w", err)
 	}
 	if repo != nil {
 		name = fmt.Sprintf("%s_%s", req.SourceNamespace, req.SourceName)
 		repo, err = c.repoStore.FindByPath(ctx, req.RepoType, namespace, name)
-		if err != nil {
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("failed to check repo existance, error: %w", err)
 		}
 		if repo != nil {
@@ -212,19 +234,22 @@ func (c *MirrorComponent) CreateMirrorRepo(ctx context.Context, req types.Create
 	mirror.Repository = repo
 	mirror.LocalRepoPath = fmt.Sprintf("%s_%s_%s_%s", mirrorSource.SourceName, req.RepoType, req.SourceNamespace, req.SourceName)
 	mirror.SourceRepoPath = fmt.Sprintf("%s/%s", req.SourceNamespace, req.SourceName)
+	mirror.Priority = types.HighMirrorPriority
+	var taskId int64
+	if c.config.GitServer.Type == types.GitServerTypeGitea {
+		taskId, err = c.mirrorServer.CreateMirrorRepo(ctx, mirrorserver.CreateMirrorRepoReq{
+			Namespace: "root",
+			Name:      mirror.LocalRepoPath,
+			CloneUrl:  mirror.SourceUrl,
+			// Username:    req.SourceNamespace,
+			// AccessToken: mirror.AccessToken,
+			Private: false,
+			SyncLfs: req.SyncLfs,
+		})
 
-	taskId, err := c.mirrorServer.CreateMirrorRepo(ctx, mirrorserver.CreateMirrorRepoReq{
-		Namespace: "root",
-		Name:      mirror.LocalRepoPath,
-		CloneUrl:  mirror.SourceUrl,
-		// Username:    req.SourceNamespace,
-		// AccessToken: mirror.AccessToken,
-		Private: false,
-		SyncLfs: req.SyncLfs,
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to create push mirror in mirror server: %v", err)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create push mirror in mirror server: %v", err)
+		}
 	}
 
 	mirror.MirrorTaskID = taskId
@@ -234,8 +259,19 @@ func (c *MirrorComponent) CreateMirrorRepo(ctx context.Context, req types.Create
 		return nil, fmt.Errorf("failed to create mirror")
 	}
 
-	return reqMirror, nil
+	if c.config.GitServer.Type == types.GitServerTypeGitaly {
+		c.mq.PushRepoMirror(&queue.MirrorTask{
+			MirrorID: reqMirror.ID,
+			Priority: queue.PriorityMap[reqMirror.Priority],
+		})
+		reqMirror.Status = types.MirrorWaiting
+		err = c.mirrorStore.Update(ctx, reqMirror)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update mirror status: %v", err)
+		}
+	}
 
+	return reqMirror, nil
 }
 
 func (m *MirrorComponent) mapNamespaceAndName(sourceNamespace string) string {
@@ -327,7 +363,7 @@ func (c *MirrorComponent) checkAndUpdateMirrorStatus(ctx context.Context, mirror
 		if err != nil {
 			slog.Error("fail to get repo detail from git server")
 		} else {
-			mirror.Repository.HTTPCloneURL = repoRes.HttpCloneURL
+			mirror.Repository.HTTPCloneURL = common.PortalCloneUrl(repoRes.HttpCloneURL, mirror.Repository.RepositoryType, c.config.GitServer.URL, c.config.Frontend.URL)
 			mirror.Repository.SSHCloneURL = repoRes.SshCloneURL
 			mirror.Repository.DefaultBranch = repoRes.DefaultBranch
 		}
@@ -548,8 +584,15 @@ func (c *MirrorComponent) countMirrorProgress(ctx context.Context, mirror databa
 	return int8(progress), nil
 }
 
-func (c *MirrorComponent) Repos(ctx context.Context, per, page int) ([]types.MirrorRepo, int, error) {
+func (c *MirrorComponent) Repos(ctx context.Context, currentUser string, per, page int) ([]types.MirrorRepo, int, error) {
 	var mirrorRepos []types.MirrorRepo
+	user, err := c.userStore.FindByUsername(ctx, currentUser)
+	if err != nil {
+		return nil, 0, errors.New("user does not exist")
+	}
+	if !user.CanAdmin() {
+		return nil, 0, errors.New("user does not have admin permission")
+	}
 	repos, total, err := c.repoStore.WithMirror(ctx, per, page)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get mirror repositories: %v", err)
@@ -563,4 +606,39 @@ func (c *MirrorComponent) Repos(ctx context.Context, per, page int) ([]types.Mir
 		})
 	}
 	return mirrorRepos, total, nil
+}
+
+func (c *MirrorComponent) Index(ctx context.Context, currentUser string, per, page int) ([]types.Mirror, int, error) {
+	var mirrorsResp []types.Mirror
+	user, err := c.userStore.FindByUsername(ctx, currentUser)
+	if err != nil {
+		return nil, 0, errors.New("user does not exist")
+	}
+	if !user.CanAdmin() {
+		return nil, 0, errors.New("user does not have admin permission")
+	}
+	mirrors, total, err := c.mirrorStore.IndexWithPagination(ctx, per, page)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get mirror mirrors: %v", err)
+	}
+	for _, mirror := range mirrors {
+		mirrorsResp = append(mirrorsResp, types.Mirror{
+			SourceUrl: mirror.SourceUrl,
+			MirrorSource: types.MirrorSource{
+				SourceName: mirror.MirrorSource.SourceName,
+			},
+			Username:        mirror.Username,
+			AccessToken:     mirror.AccessToken,
+			PushUrl:         mirror.PushUrl,
+			PushUsername:    mirror.PushUsername,
+			PushAccessToken: mirror.PushAccessToken,
+			LastUpdatedAt:   mirror.LastUpdatedAt,
+			SourceRepoPath:  mirror.SourceRepoPath,
+			LocalRepoPath:   fmt.Sprintf("%ss/%s", mirror.Repository.RepositoryType, mirror.Repository.Path),
+			LastMessage:     mirror.LastMessage,
+			Status:          mirror.Status,
+			Progress:        mirror.Progress,
+		})
+	}
+	return mirrorsResp, total, nil
 }
