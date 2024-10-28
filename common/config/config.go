@@ -12,7 +12,8 @@ type Config struct {
 
 	APIServer struct {
 		Port         int    `envconfig:"STARHUB_SERVER_SERVER_PORT" default:"8080"`
-		PublicDomain string `envconfig:"STARHUB_SERVER_PUBLIC_DOMAIN" default:"localhost:8080"`
+		PublicDomain string `envconfig:"STARHUB_SERVER_PUBLIC_DOMAIN" default:"http://localhost:8080"`
+		SSHDomain    string `envconfig:"STARHUB_SERVER_SSH_DOMAIN" default:"ssh://git@localhost:2222"`
 	}
 
 	Mirror struct {
@@ -20,6 +21,7 @@ type Config struct {
 		Token            string `envconfig:"STARHUB_SERVER_MIRROR_Token" default:""`
 		Port             int    `envconfig:"STARHUB_SERVER_MIRROR_PORT" default:"8085"`
 		SessionSecretKey string `envconfig:"STARHUB_SERVER_MIRROR_SESSION_SECRET_KEY" default:"mirror"`
+		WorkerNumber     int    `envconfig:"STARHUB_SERVER_MIRROR_WORKER_NUMBER" default:"5"`
 	}
 
 	DocsHost string `envconfig:"STARHUB_SERVER_SERVER_DOCS_HOST" default:"http://localhost:6636"`
@@ -42,12 +44,20 @@ type Config struct {
 	}
 
 	GitServer struct {
-		URL       string `envconfig:"STARHUB_SERVER_GITSERVER_URL"    default:"http://localhost:3000"`
-		Type      string `envconfig:"STARHUB_SERVER_GITSERVER_TYPE"    default:"gitea"`
-		Host      string `envconfig:"STARHUB_SERVER_GITSERVER_HOST"       default:"http://localhost:3000"`
-		SecretKey string `envconfig:"STARHUB_SERVER_GITSERVER_SECRET_KEY" default:"619c849c49e03754454ccd4cda79a209ce0b30b3"`
-		Username  string `envconfig:"STARHUB_SERVER_GITSERVER_USERNAME" default:"root"`
-		Password  string `envconfig:"STARHUB_SERVER_GITSERVER_PASSWORD" default:"password123"`
+		URL        string `envconfig:"STARHUB_SERVER_GITSERVER_URL"    default:"http://localhost:3000"`
+		Type       string `envconfig:"STARHUB_SERVER_GITSERVER_TYPE"    default:"gitea"`
+		Host       string `envconfig:"STARHUB_SERVER_GITSERVER_HOST"       default:"http://localhost:3000"`
+		SecretKey  string `envconfig:"STARHUB_SERVER_GITSERVER_SECRET_KEY" default:"619c849c49e03754454ccd4cda79a209ce0b30b3"`
+		Username   string `envconfig:"STARHUB_SERVER_GITSERVER_USERNAME" default:"root"`
+		Password   string `envconfig:"STARHUB_SERVER_GITSERVER_PASSWORD" default:"password123"`
+		TimtoutSEC int    `envconfig:"STARHUB_SERVER_GITSERVER_TIMEOUT_SEC" default:"5"`
+	}
+
+	GitalyServer struct {
+		Address   string `envconfig:"STARHUB_SERVER_GITALY_SERVER_SOCKET" default:"tcp://localhost:9999"`
+		Storge    string `envconfig:"STARHUB_SERVER_GITALY_STORGE" default:"default"`
+		Token     string `envconfig:"STARHUB_SERVER_GITALY_TOKEN" default:"abc123secret"`
+		JWTSecret string `envconfig:"STARHUB_SERVER_GITALY_JWT_SECRET" default:"signing-key"`
 	}
 
 	MirrorServer struct {
@@ -71,7 +81,7 @@ type Config struct {
 		Region          string `envconfig:"STARHUB_SERVER_S3_REGION"`
 		Endpoint        string `envconfig:"STARHUB_SERVER_S3_ENDPOINT" default:"oss-cn-beijing.aliyuncs.com"`
 		Bucket          string `envconfig:"STARHUB_SERVER_S3_BUCKET" default:"opencsg-test"`
-		EnableSSL       bool   `envconfig:"STARHUB_SERVER_S3_ENABLE_SSL" default:"true"`
+		EnableSSL       bool   `envconfig:"STARHUB_SERVER_S3_ENABLE_SSL" default:"false"`
 	}
 
 	SensitiveCheck struct {
@@ -110,11 +120,14 @@ type Config struct {
 		SessionSecretKey   string `envconfig:"STARHUB_SERVER_SPACE_SESSION_SECRET_KEY" default:"secret"`
 		DeployTimeoutInMin int    `envconfig:"STARHUB_SERVER_SPACE_DEPLOY_TIMEOUT_IN_MINUTES" default:"30"`
 		// gpu model label
-		GPUModelLabel string `envconfig:"STARHUB_SERVER_GPU_MODEL_LABEL" default:"aliyun.accelerator/nvidia_name"`
+		GPUModelLabel            string `envconfig:"STARHUB_SERVER_GPU_MODEL_LABEL" default:"aliyun.accelerator/nvidia_name"`
+		ReadnessDelaySeconds     int    `envconfig:"STARHUB_SERVER_READNESS_DELAY_SECONDS" default:"120"`
+		ReadnessPeriodSeconds    int    `envconfig:"STARHUB_SERVER_READNESS_PERIOD_SECONDS" default:"10"`
+		ReadnessFailureThreshold int    `envconfig:"STARHUB_SERVER_READNESS_FAILURE_THRESHOLD" default:"3"`
 	}
 
 	Model struct {
-		DeployTimeoutInMin int    `envconfig:"STARHUB_SERVER_MODEL_DEPLOY_TIMEOUT_IN_MINUTES" default:"30"`
+		DeployTimeoutInMin int    `envconfig:"STARHUB_SERVER_MODEL_DEPLOY_TIMEOUT_IN_MINUTES" default:"60"`
 		DownloadEndpoint   string `envconfig:"STARHUB_SERVER_MODEL_DOWNLOAD_ENDPOINT" default:"https://hub.opencsg.com"`
 		DockerRegBase      string `envconfig:"STARHUB_SERVER_MODEL_DOCKER_REG_BASE" default:"opencsg-registry.cn-beijing.cr.aliyuncs.com/public/"`
 	}
@@ -153,7 +166,9 @@ type Config struct {
 	}
 
 	MultiSync struct {
-		// Enabled bool `envconfig:"STARHUB_SERVER_MULTI_SYNC_ENABLED" default:"false"`
+		SaasAPIDomain  string `envconfig:"OPENCSG_SAAS_API_DOMAIN" default:"https://hub.opencsg.com"`
+		SaasSyncDomain string `envconfig:"OPENCSG_SAAS_SYNC_DOMAIN" default:"https://sync.opencsg.com"`
+		Enabled        bool   `envconfig:"STARHUB_SERVER_MULTI_SYNC_ENABLED" default:"false"`
 	}
 
 	Telemetry struct {

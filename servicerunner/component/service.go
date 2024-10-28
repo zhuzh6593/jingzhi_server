@@ -17,11 +17,10 @@ import (
 )
 
 var (
-	KeyDeployID    string = "deploy_id"
-	KeyDeployType  string = "deploy_type"
-	KeyUserID      string = "user_id"
-	KeyCostPerHour string = "cost_per_hour"
-	KeyDeploySKU   string = "deploy_sku"
+	KeyDeployID   string = "deploy_id"
+	KeyDeployType string = "deploy_type"
+	KeyUserID     string = "user_id"
+	KeyDeploySKU  string = "deploy_sku"
 )
 
 type ServiceComponent struct {
@@ -92,7 +91,6 @@ func (s *ServiceComponent) GenerateService(request types.SVCRequest, srvName str
 	annotations[KeyDeployID] = strconv.FormatInt(request.DeployID, 10)
 	annotations[KeyDeployType] = strconv.Itoa(request.DeployType)
 	annotations[KeyUserID] = request.UserID
-	annotations[KeyCostPerHour] = strconv.FormatFloat(request.CostPerHour, 'f', 2, 64)
 	annotations[KeyDeploySKU] = request.Sku
 
 	containerImg := path.Join(s.spaceDockerRegBase, request.ImageID)
@@ -111,6 +109,15 @@ func (s *ServiceComponent) GenerateService(request types.SVCRequest, srvName str
 		templateAnnotations["autoscaling.knative.dev/target-utilization-percentage"] = "90"
 		templateAnnotations["autoscaling.knative.dev/min-scale"] = strconv.Itoa(request.MinReplica)
 		templateAnnotations["autoscaling.knative.dev/max-scale"] = strconv.Itoa(request.MaxReplica)
+		templateAnnotations["serving.knative.dev/progress-deadline"] = fmt.Sprintf("%dm", s.env.Model.DeployTimeoutInMin)
+	}
+	initialDelaySeconds := 10
+	periodSeconds := 10
+	failureThreshold := 3
+	if request.DeployType == types.InferenceType {
+		initialDelaySeconds = s.env.Space.ReadnessDelaySeconds
+		periodSeconds = s.env.Space.ReadnessPeriodSeconds
+		failureThreshold = s.env.Space.ReadnessFailureThreshold
 	}
 
 	service := &v1.Service{
@@ -135,6 +142,11 @@ func (s *ServiceComponent) GenerateService(request types.SVCRequest, srvName str
 								Ports:     exposePorts,
 								Resources: resources,
 								Env:       environments,
+								ReadinessProbe: &corev1.Probe{
+									InitialDelaySeconds: int32(initialDelaySeconds),
+									PeriodSeconds:       int32(periodSeconds),
+									FailureThreshold:    int32(failureThreshold),
+								},
 							}},
 							ImagePullSecrets: []corev1.LocalObjectReference{
 								{

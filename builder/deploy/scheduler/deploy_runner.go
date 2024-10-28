@@ -31,9 +31,10 @@ type DeployRunner struct {
 	deployStartTime       time.Time
 	deployTimeout         *DeployTimeout
 	modelDownloadEndpoint string
+	publicDomain          string
 }
 
-func NewDeployRunner(ir imagerunner.Runner, r *RepoInfo, t *database.DeployTask, dto *DeployTimeout, mdep string) Runner {
+func NewDeployRunner(ir imagerunner.Runner, r *RepoInfo, t *database.DeployTask, dto *DeployTimeout, mdep, publicDomain string) Runner {
 	return &DeployRunner{
 		repo:                  r,
 		task:                  t,
@@ -43,6 +44,7 @@ func NewDeployRunner(ir imagerunner.Runner, r *RepoInfo, t *database.DeployTask,
 		deployTimeout:         dto,
 		tokenStore:            database.NewAccessTokenStore(),
 		modelDownloadEndpoint: mdep,
+		publicDomain:          publicDomain,
 	}
 }
 
@@ -269,12 +271,24 @@ func (t *DeployRunner) makeDeployRequest() (*types.RunRequest, error) {
 		// runtime framework port for model
 		envMap["port"] = strconv.Itoa(deploy.ContainerPort)
 		envMap["HF_ENDPOINT"] = t.modelDownloadEndpoint // "https://hub-stg.opencsg.com/"
+		envMap["HF_HUB_OFFLINE"] = "1"
 	}
 
 	if deploy.Type == types.FinetuneType {
 		envMap["port"] = strconv.Itoa(deploy.ContainerPort)
 		envMap["HF_ENDPOINT"], _ = url.JoinPath(t.modelDownloadEndpoint, "hf")
 		envMap["HF_TOKEN"] = token.Token
+	}
+
+	if t.publicDomain == "" {
+		if deploy.Type == types.FinetuneType {
+			envMap["CONTEXT_PATH"] = "/endpoint/" + deploy.SvcName
+		}
+		if deploy.Type == types.SpaceType {
+			envMap["GRADIO_ROOT_PATH"] = "/endpoint/" + deploy.SvcName
+			envMap["STREAMLIT_SERVER_BASE_URL_PATH"] = "/endpoint/" + deploy.SvcName
+		}
+
 	}
 
 	targetID := deploy.SpaceID
@@ -303,7 +317,6 @@ func (t *DeployRunner) makeDeployRequest() (*types.RunRequest, error) {
 		SvcName:     deploy.SvcName,
 		DeployType:  deploy.Type,
 		UserID:      deploy.UserUUID,
-		CostPerHour: deploy.CostPerHour,
 		Sku:         deploy.SKU,
 	}, nil
 }

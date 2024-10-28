@@ -70,7 +70,7 @@ func (s *K8sHander) RunService(c *gin.Context) {
 	// check if the ksvc exists
 	_, err = cluster.KnativeClient.ServingV1().Services(s.k8sNameSpace).Get(c.Request.Context(), srvName, metav1.GetOptions{})
 	if err == nil {
-		cluster.KnativeClient.ServingV1().Services(s.k8sNameSpace).Delete(c, srvName, *metav1.NewDeleteOptions(0))
+		s.removeServiceForcely(c, cluster, srvName)
 		slog.Info("service already exists,delete it first", slog.String("srv_name", srvName), slog.Any("image_id", request.ImageID))
 	}
 	service, err := s.s.GenerateService(*request, srvName)
@@ -78,6 +78,24 @@ func (s *K8sHander) RunService(c *gin.Context) {
 		slog.Error("fail to generate service ", slog.Any("error", err), slog.Any("req", request))
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+	volumes := []corev1.Volume{}
+	volumeMounts := []corev1.VolumeMount{}
+	if request.DeployType != types.SpaceType {
+		// dshm volume for multi-gpu share memory
+		volumes = append(volumes, corev1.Volume{
+			Name: "dshm",
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{
+					Medium: corev1.StorageMediumMemory,
+				},
+			},
+		})
+
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "dshm",
+			MountPath: "/dev/shm",
+		})
 	}
 	// add pvc if possible
 	// space image was built from user's code, model cache dir is hard to control
@@ -89,24 +107,22 @@ func (s *K8sHander) RunService(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create persist volume"})
 			return
 		}
-		service.Spec.Template.Spec.Volumes = []corev1.Volume{
-			{
-				Name: "nas-pvc",
-				VolumeSource: corev1.VolumeSource{
-					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-						ClaimName: srvName,
-					},
+		volumes = append(volumes, corev1.Volume{
+			Name: "nas-pvc",
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: srvName,
 				},
 			},
-		}
+		})
 
-		service.Spec.Template.Spec.Containers[0].VolumeMounts = []corev1.VolumeMount{
-			{
-				Name:      "nas-pvc",
-				MountPath: "/workspace",
-			},
-		}
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "nas-pvc",
+			MountPath: "/workspace",
+		})
 	}
+	service.Spec.Template.Spec.Volumes = volumes
+	service.Spec.Template.Spec.Containers[0].VolumeMounts = volumeMounts
 
 	slog.Debug("ksvc", slog.Any("knative service", service))
 
@@ -169,8 +185,7 @@ func (s *K8sHander) StopService(c *gin.Context) {
 		c.JSON(http.StatusOK, resp)
 		return
 	}
-
-	err = cluster.KnativeClient.ServingV1().Services(s.k8sNameSpace).Delete(c, srvName, *metav1.NewDeleteOptions(0))
+	err = s.removeServiceForcely(c, cluster, srvName)
 	if err != nil {
 		slog.Error("stop image failed, cannot delete service ", slog.String("srv_name", srvName), slog.Any("error", err),
 			slog.String("srv_name", srvName))
@@ -184,6 +199,31 @@ func (s *K8sHander) StopService(c *gin.Context) {
 	resp.Code = 0
 	resp.Message = "service deleted"
 	c.JSON(http.StatusOK, resp)
+}
+
+func (s *K8sHander) removeServiceForcely(c *gin.Context, cluster *cluster.Cluster, svcName string) error {
+	err := cluster.KnativeClient.ServingV1().Services(s.k8sNameSpace).Delete(context.Background(), svcName, *metav1.NewDeleteOptions(0))
+	if err != nil {
+		return err
+	}
+	podNames, _ := s.GetServicePods(c.Request.Context(), *cluster, svcName, s.k8sNameSpace, -1)
+	if podNames == nil {
+		return nil
+	}
+	gracePeriodSeconds := int64(0)
+	deletePolicy := metav1.DeletePropagationForeground
+	deleteOptions := metav1.DeleteOptions{
+		GracePeriodSeconds: &gracePeriodSeconds,
+		PropagationPolicy:  &deletePolicy,
+	}
+
+	for _, podName := range podNames {
+		errForce := cluster.Client.CoreV1().Pods(s.k8sNameSpace).Delete(c.Request.Context(), podName, deleteOptions)
+		if errForce != nil {
+			slog.Error("removeServiceForcely failed to delete pod", slog.String("pod_name", podName), slog.Any("error", errForce))
+		}
+	}
+	return nil
 }
 
 func (s *K8sHander) UpdateService(c *gin.Context) {
@@ -304,10 +344,7 @@ func (s *K8sHander) ServiceStatus(c *gin.Context) {
 	}
 	deployIDStr := srv.Annotations["deploy_id"]
 	deployID, _ := strconv.ParseInt(deployIDStr, 10, 64)
-	costStr := srv.Annotations["cost_per_hour"]
-	cost, _ := strconv.ParseFloat(costStr, 32)
 	resp.DeployID = deployID
-	resp.CostPerHour = cost
 	resp.UserID = srv.Annotations["user_id"]
 
 	// retrive pod list and status
@@ -511,18 +548,11 @@ func (s *K8sHander) ServiceStatusAll(c *gin.Context) {
 			if err != nil {
 				deployType = 0
 			}
-			costStr := srv.Annotations[component.KeyCostPerHour]
-			cost, err := strconv.ParseFloat(costStr, 32)
-			if err != nil {
-				// for old space, no charge
-				cost = 0
-			}
 			userID := srv.Annotations[component.KeyUserID]
 			deploySku := srv.Annotations[component.KeyDeploySKU]
 			status := &types.StatusResponse{
 				DeployID:    deployID,
 				UserID:      userID,
-				CostPerHour: cost,
 				DeployType:  int(deployType),
 				ServiceName: srv.Name,
 				DeploySku:   deploySku,
@@ -612,6 +642,7 @@ func (s *K8sHander) GetClusterInfoByID(c *gin.Context) {
 	clusterInfo.Zone = cInfo.Zone
 	clusterInfo.Provider = cInfo.Provider
 	clusterInfo.ClusterID = cInfo.ClusterID
+	clusterInfo.StorageClass = cInfo.StorageClass
 	client, err := s.clusterPool.GetClusterByID(c.Request.Context(), clusterId)
 	if err != nil {
 		slog.Error("fail to get cluster", slog.Any("error", err))
@@ -817,7 +848,7 @@ func (s *K8sHander) PurgeService(c *gin.Context) {
 			slog.String("srv_name", srvName))
 	} else {
 		// 1 delete service
-		err = cluster.KnativeClient.ServingV1().Services(s.k8sNameSpace).Delete(c, srvName, *metav1.NewDeleteOptions(0))
+		err = s.removeServiceForcely(c, cluster, srvName)
 		if err != nil {
 			slog.Error("failed to delete service ", slog.String("srv_name", srvName), slog.Any("error", err),
 				slog.String("srv_name", srvName))

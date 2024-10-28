@@ -27,6 +27,39 @@ func NewRouter(config *config.Config, enableSwagger bool) (*gin.Engine, error) {
 	}))
 	r.Use(gin.Recovery())
 	r.Use(middleware.Log())
+	gitHTTPHandler, err := handler.NewGitHTTPHandler(config)
+	if err != nil {
+		return nil, fmt.Errorf("error creating git http handler:%w", err)
+	}
+	gitHTTP := r.Group("/:repo_type/:namespace/:name")
+	gitHTTP.Use(middleware.GitHTTPParamMiddleware())
+	gitHTTP.Use(middleware.GetCurrentUserFromHeader())
+	{
+		gitHTTP.GET("/info/refs", gitHTTPHandler.InfoRefs)
+		gitHTTP.POST("/git-upload-pack", middleware.ContentEncoding(), gitHTTPHandler.GitUploadPack)
+		gitHTTP.POST("/git-receive-pack", middleware.ContentEncoding(), gitHTTPHandler.GitReceivePack)
+		lfsGroup := gitHTTP.Group("/info/lfs")
+		{
+			objectsGroup := lfsGroup.Group("/objects")
+			{
+				objectsGroup.POST("/batch", gitHTTPHandler.LfsBatch)
+				objectsGroup.PUT("/:oid/:size", gitHTTPHandler.LfsUpload)
+				lfsGroup.GET("/:oid", gitHTTPHandler.LfsDownload)
+			}
+			lfsGroup.POST("/verify", gitHTTPHandler.LfsVerify)
+
+			locksGroup := lfsGroup.Group("/locks")
+			{
+				locksGroup.GET("", gitHTTPHandler.ListLocks)
+				locksGroup.POST("", gitHTTPHandler.CreateLock)
+				locksGroup.POST("/verify", gitHTTPHandler.VerifyLock)
+				locksGroup.POST("/:lid/unlock", gitHTTPHandler.UnLock)
+			}
+
+		}
+
+	}
+
 	r.Use(middleware.Authenticator(config))
 
 	needAPIKey := middleware.OnlyAPIKeyAuthenticator(config)
@@ -217,8 +250,8 @@ func NewRouter(config *config.Config, enableSwagger bool) (*gin.Engine, error) {
 		return nil, fmt.Errorf("error creating mirror source controller:%w", err)
 	}
 
+	apiGroup.GET("/mirrors", mirrorHandler.Index)
 	mirror := apiGroup.Group("/mirror")
-	mirror.Use(needAPIKey)
 	{
 		mirror.GET("/sources", msHandler.Index)
 		mirror.POST("/sources", msHandler.Create)
@@ -254,6 +287,7 @@ func NewRouter(config *config.Config, enableSwagger bool) (*gin.Engine, error) {
 	cluster := apiGroup.Group("/cluster")
 	{
 		cluster.GET("", clusterHandler.Index)
+		cluster.GET("/:id", clusterHandler.GetClusterById)
 		cluster.PUT("/:id", needAPIKey, clusterHandler.Update)
 	}
 
@@ -264,7 +298,12 @@ func NewRouter(config *config.Config, enableSwagger bool) (*gin.Engine, error) {
 	event := apiGroup.Group("/events")
 	event.POST("", eventHandler.Create)
 
-	createRuntimeFrameworkRoutes(apiGroup, needAPIKey, modelHandler)
+	runtimeArchHandler, err := handler.NewRuntimeArchitectureHandler(config)
+	if err != nil {
+		return nil, fmt.Errorf("error creating runtime framework architecture handler:%w", err)
+	}
+
+	createRuntimeFrameworkRoutes(apiGroup, needAPIKey, modelHandler, runtimeArchHandler)
 
 	syncHandler, err := handler.NewSyncHandler(config)
 	if err != nil {
@@ -305,6 +344,30 @@ func NewRouter(config *config.Config, enableSwagger bool) (*gin.Engine, error) {
 	}
 	teleGroup := apiGroup.Group("/telemetry")
 	teleGroup.POST("/usage", telemetryHandler.Usage)
+
+	// internal API for gitaly to check request permissions
+	internalHandler, err := handler.NewInternalHandler(config)
+	if err != nil {
+		return nil, fmt.Errorf("error creating internalHandler,%w", err)
+	}
+	needGitlabShellJWTToken := middleware.CheckGitlabShellJWTToken(config)
+	r.GET("/api/v4/internal/authorized_keys", needGitlabShellJWTToken, internalHandler.GetAuthorizedKeys)
+	r.POST("/api/v4/internal/allowed", needGitlabShellJWTToken, internalHandler.SSHAllowed)
+	r.POST("/api/v4/internal/pre_receive", needGitlabShellJWTToken, internalHandler.PreReceive)
+	r.POST("api/v4/internal/lfs_authenticate", needGitlabShellJWTToken, internalHandler.LfsAuthenticate)
+	r.POST("/api/v4/internal/post_receive", needGitlabShellJWTToken, internalHandler.PostReceive)
+	internalGroup := apiGroup.Group("/internal")
+	{
+		internalGroup.POST("/allowed", needGitlabShellJWTToken, internalHandler.Allowed)
+		internalGroup.POST("/pre_receive", needGitlabShellJWTToken, internalHandler.PreReceive)
+		internalGroup.POST("/post_receive", needGitlabShellJWTToken, internalHandler.PostReceive)
+	}
+
+	discussionHandler, err := handler.NewDiscussionHandler()
+	if err != nil {
+		return nil, fmt.Errorf("error creating discussion handler:%w", err)
+	}
+	createDiscussionRoutes(apiGroup, needAPIKey, discussionHandler)
 
 	return r, nil
 }
@@ -581,7 +644,7 @@ func createUserRoutes(apiGroup *gin.RouterGroup, needAPIKey gin.HandlerFunc, use
 	apiGroup.GET("/user/:username/run/serverless", needAPIKey, userHandler.GetRunServerless)
 }
 
-func createRuntimeFrameworkRoutes(apiGroup *gin.RouterGroup, needAPIKey gin.HandlerFunc, modelHandler *handler.ModelHandler) {
+func createRuntimeFrameworkRoutes(apiGroup *gin.RouterGroup, needAPIKey gin.HandlerFunc, modelHandler *handler.ModelHandler, runtimeArchHandler *handler.RuntimeArchitectureHandler) {
 	runtimeFramework := apiGroup.Group("/runtime_framework")
 	{
 		runtimeFramework.GET("/:id/models", modelHandler.ListByRuntimeFrameworkID)
@@ -589,6 +652,11 @@ func createRuntimeFrameworkRoutes(apiGroup *gin.RouterGroup, needAPIKey gin.Hand
 		runtimeFramework.POST("/:id", needAPIKey, modelHandler.UpdateModelRuntimeFrameworks)
 		runtimeFramework.DELETE("/:id", needAPIKey, modelHandler.DeleteModelRuntimeFrameworks)
 		runtimeFramework.GET("/models", modelHandler.ListModelsOfRuntimeFrameworks)
+
+		runtimeFramework.GET("/:id/architecture", needAPIKey, runtimeArchHandler.ListByRuntimeFrameworkID)
+		runtimeFramework.PUT("/:id/architecture", needAPIKey, runtimeArchHandler.UpdateArchitecture)
+		runtimeFramework.DELETE("/:id/architecture", needAPIKey, runtimeArchHandler.DeleteArchitecture)
+		runtimeFramework.POST("/:id/scan", needAPIKey, runtimeArchHandler.ScanArchitecture)
 	}
 }
 
@@ -632,5 +700,16 @@ func createHFRoutes(r *gin.Engine, hfdsHandler *handler.HFDatasetHandler, repoCo
 			}
 		}
 	}
+}
 
+func createDiscussionRoutes(apiGroup *gin.RouterGroup, needAPIKey gin.HandlerFunc, discussionHandler *handler.DiscussionHandler) {
+	apiGroup.POST("/:repo_type/:namespace/:name/discussions", discussionHandler.CreateRepoDiscussion)
+	apiGroup.GET("/:repo_type/:namespace/:name/discussions", discussionHandler.ListRepoDiscussions)
+	apiGroup.GET("/discussions/:id", discussionHandler.ShowDiscussion)
+	apiGroup.PUT("/discussions/:id", discussionHandler.UpdateDiscussion)
+	apiGroup.DELETE("/discussions/:id", discussionHandler.DeleteDiscussion)
+	apiGroup.POST("/discussions/:id/comments", discussionHandler.CreateDiscussionComment)
+	apiGroup.GET("/discussions/:id/comments", discussionHandler.ListDiscussionComments)
+	apiGroup.PUT("/discussions/:id/comments/:comment_id", discussionHandler.UpdateComment)
+	apiGroup.DELETE("/discussions/:id/comments/:comment_id", discussionHandler.DeleteComment)
 }

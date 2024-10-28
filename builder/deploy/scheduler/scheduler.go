@@ -11,7 +11,9 @@ import (
 	"opencsg.com/csghub-server/builder/deploy/imagebuilder"
 	"opencsg.com/csghub-server/builder/deploy/imagerunner"
 	"opencsg.com/csghub-server/builder/store/database"
+	"opencsg.com/csghub-server/common/config"
 	"opencsg.com/csghub-server/common/types"
+	"opencsg.com/csghub-server/common/utils/common"
 )
 
 type Scheduler interface {
@@ -37,9 +39,11 @@ type FIFOScheduler struct {
 	spaceDeployTimeoutInMin int
 	modelDeployTimeoutInMin int
 	modelDownloadEndpoint   string
+	PublicRootDomain        string
+	config                  *config.Config
 }
 
-func NewFIFOScheduler(ib imagebuilder.Builder, ir imagerunner.Runner, sdt, mdt int, mdep string) Scheduler {
+func NewFIFOScheduler(ib imagebuilder.Builder, ir imagerunner.Runner, sdt, mdt int, mdep, prd string) Scheduler {
 	s := &FIFOScheduler{}
 	// TODO:allow config
 	s.timeout = 30 * time.Minute
@@ -57,6 +61,8 @@ func NewFIFOScheduler(ib imagebuilder.Builder, ir imagerunner.Runner, sdt, mdt i
 	s.spaceDeployTimeoutInMin = sdt
 	s.modelDeployTimeoutInMin = mdt
 	s.modelDownloadEndpoint = mdep
+	s.PublicRootDomain = prd
+	s.config, _ = config.LoadConfig()
 	return s
 }
 
@@ -142,11 +148,12 @@ func (rs *FIFOScheduler) next() (Runner, error) {
 		var s *database.Space
 		s, err = rs.spaceStore.ByID(ctx, deployTask.Deploy.SpaceID)
 		if err == nil {
+			repoCloneInfo := common.BuildCloneInfo(rs.config, s.Repository)
 			repo.Path = s.Repository.Path
 			repo.Name = s.Repository.Name
 			repo.Sdk = s.Sdk
 			repo.SdkVersion = s.SdkVersion
-			repo.HTTPCloneURL = s.Repository.HTTPCloneURL
+			repo.HTTPCloneURL = repoCloneInfo.HTTPCloneURL
 			repo.SpaceID = s.ID
 			repo.RepoID = s.Repository.ID
 			repo.UserName = s.Repository.User.Username
@@ -195,6 +202,7 @@ func (rs *FIFOScheduler) next() (Runner, error) {
 				deployModelTimeoutInMin: rs.modelDeployTimeoutInMin,
 			},
 			rs.modelDownloadEndpoint,
+			rs.PublicRootDomain,
 		)
 	}
 

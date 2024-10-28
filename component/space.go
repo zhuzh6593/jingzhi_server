@@ -3,9 +3,9 @@ package component
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -15,6 +15,7 @@ import (
 	"opencsg.com/csghub-server/builder/store/database"
 	"opencsg.com/csghub-server/common/config"
 	"opencsg.com/csghub-server/common/types"
+	"opencsg.com/csghub-server/common/utils/common"
 )
 
 const spaceGitattributesContent = modelGitattributesContent
@@ -68,6 +69,9 @@ func (c *SpaceComponent) Create(ctx context.Context, req types.CreateSpaceReq) (
 	} else {
 		nickname = req.Name
 	}
+	if req.DefaultBranch == "" {
+		req.DefaultBranch = "main"
+	}
 	req.Nickname = nickname
 	req.RepoType = types.SpaceRepo
 	req.Readme = generateReadmeData(req.License)
@@ -98,7 +102,6 @@ func (c *SpaceComponent) Create(ctx context.Context, req types.CreateSpaceReq) (
 		Env:           req.Env,
 		Hardware:      resource.Resources,
 		Secrets:       req.Secrets,
-		CostPerHour:   resource.CostPerHour,
 		SKU:           strconv.FormatInt(resource.ID, 10),
 	}
 
@@ -201,7 +204,19 @@ func (c *SpaceComponent) Show(ctx context.Context, namespace, name, currentUser 
 	var endpoint string
 	svcName, status, _ := c.status(ctx, space)
 	if len(svcName) > 0 {
-		endpoint = fmt.Sprintf("%s.%s", svcName, c.publicRootDomain)
+		if c.publicRootDomain == "" {
+			if space.Sdk == scheduler.STREAMLIT.Name || space.Sdk == scheduler.GRADIO.Name {
+				// if endpoint not ends with /, fastapi based app (gradio and streamlit) will redirect with http 307
+				// see issue: https://stackoverflow.com/questions/70351360/keep-getting-307-temporary-redirect-before-returning-status-200-hosted-on-fast
+				endpoint, _ = url.JoinPath(c.serverBaseUrl, "endpoint", svcName, "/")
+			} else {
+				endpoint, _ = url.JoinPath(c.serverBaseUrl, "endpoint", svcName)
+			}
+			endpoint = strings.Replace(endpoint, "http://", "", 1)
+			endpoint = strings.Replace(endpoint, "https://", "", 1)
+		} else {
+			endpoint = fmt.Sprintf("%s.%s", svcName, c.publicRootDomain)
+		}
 	}
 
 	likeExists, err := c.uls.IsExist(ctx, currentUser, space.Repository.ID)
@@ -209,6 +224,7 @@ func (c *SpaceComponent) Show(ctx context.Context, namespace, name, currentUser 
 		newError := fmt.Errorf("failed to check for the presence of the user likes,error:%w", err)
 		return nil, newError
 	}
+	repository := common.BuildCloneInfo(c.config, space.Repository)
 
 	resModel := &types.Space{
 		ID:            space.ID,
@@ -219,12 +235,9 @@ func (c *SpaceComponent) Show(ctx context.Context, namespace, name, currentUser 
 		Path:          space.Repository.Path,
 		License:       space.Repository.License,
 		DefaultBranch: space.Repository.DefaultBranch,
-		Repository: &types.Repository{
-			HTTPCloneURL: space.Repository.HTTPCloneURL,
-			SSHCloneURL:  space.Repository.SSHCloneURL,
-		},
-		Private: space.Repository.Private,
-		Tags:    tags,
+		Repository:    &repository,
+		Private:       space.Repository.Private,
+		Tags:          tags,
 		User: &types.User{
 			Username: space.Repository.User.Username,
 			Nickname: space.Repository.User.NickName,
@@ -296,17 +309,9 @@ func (c *SpaceComponent) Update(ctx context.Context, req *types.UpdateSpaceReq) 
 func (c *SpaceComponent) Index(ctx context.Context, filter *types.RepoFilter, per, page int) ([]types.Space, int, error) {
 	var (
 		resSpaces []types.Space
-		user      database.User
 		err       error
 	)
-	if filter.Username != "" {
-		user, err = c.user.FindByUsername(ctx, filter.Username)
-		if err != nil {
-			newError := fmt.Errorf("failed to get current user,error:%w", err)
-			return nil, 0, newError
-		}
-	}
-	repos, total, err := c.rs.PublicToUser(ctx, types.SpaceRepo, user.ID, filter, per, page)
+	repos, total, err := c.PublicToUser(ctx, types.SpaceRepo, filter.Username, filter, per, page)
 	if err != nil {
 		newError := fmt.Errorf("failed to get public space repos,error:%w", err)
 		return nil, 0, newError
@@ -481,7 +486,7 @@ func (c *SpaceComponent) ListByPath(ctx context.Context, paths []string) ([]*typ
 
 func (c *SpaceComponent) AllowCallApi(ctx context.Context, spaceID int64, username string) (bool, error) {
 	if username == "" {
-		return false, errors.New("user not found, please login first")
+		return false, ErrUserNotFound
 	}
 	s, err := c.ss.ByID(ctx, spaceID)
 	if err != nil {
@@ -554,25 +559,24 @@ func (c *SpaceComponent) Deploy(ctx context.Context, namespace, name, currentUse
 
 	// create deploy for space
 	return c.deployer.Deploy(ctx, types.DeployRepo{
-		SpaceID:     s.ID,
-		Path:        s.Repository.Path,
-		GitPath:     s.Repository.GitPath,
-		GitBranch:   s.Repository.DefaultBranch,
-		Sdk:         s.Sdk,
-		SdkVersion:  s.SdkVersion,
-		Template:    s.Template,
-		Env:         s.Env,
-		Hardware:    s.Hardware,
-		Secret:      s.Secrets,
-		RepoID:      s.Repository.ID,
-		ModelID:     0,
-		UserID:      user.ID,
-		Annotation:  string(annoStr),
-		ImageID:     containerImg,
-		CostPerHour: s.CostPerHour,
-		Type:        types.SpaceType,
-		UserUUID:    user.UUID,
-		SKU:         s.SKU,
+		SpaceID:    s.ID,
+		Path:       s.Repository.Path,
+		GitPath:    s.Repository.GitPath,
+		GitBranch:  s.Repository.DefaultBranch,
+		Sdk:        s.Sdk,
+		SdkVersion: s.SdkVersion,
+		Template:   s.Template,
+		Env:        s.Env,
+		Hardware:   s.Hardware,
+		Secret:     s.Secrets,
+		RepoID:     s.Repository.ID,
+		ModelID:    0,
+		UserID:     user.ID,
+		Annotation: string(annoStr),
+		ImageID:    containerImg,
+		Type:       types.SpaceType,
+		UserUUID:   user.UUID,
+		SKU:        s.SKU,
 	})
 }
 
@@ -750,7 +754,6 @@ func (c *SpaceComponent) mergeUpdateSpaceRequest(ctx context.Context, space *dat
 			return fmt.Errorf("can't find space resource by id, resource id:%d, error:%w", *req.ResourceID, err)
 		}
 		space.Hardware = resource.Resources
-		space.CostPerHour = resource.CostPerHour
 		space.SKU = strconv.FormatInt(resource.ID, 10)
 	}
 

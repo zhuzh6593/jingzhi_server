@@ -159,7 +159,6 @@ func (d *deployer) dedicatedDeploy(ctx context.Context, dr types.DeployRepo) (*d
 		Annotation:       dr.Annotation,
 		MinReplica:       dr.MinReplica,
 		MaxReplica:       dr.MaxReplica,
-		CostPerHour:      dr.CostPerHour,
 		ClusterID:        dr.ClusterID,
 		SecureLevel:      dr.SecureLevel,
 		SvcName:          uniqueSvcName,
@@ -263,7 +262,7 @@ func (d *deployer) Status(ctx context.Context, dr types.DeployRepo, needDetails 
 		}
 		return svcName, deploy.Status, nil, nil
 	}
-
+	deployStatus := rstatus.Code
 	if dr.ModelID > 0 {
 		targetID := dr.DeployID // support model deploy with multi-instance
 		status, err := d.ir.Status(ctx, &types.StatusRequest{
@@ -279,12 +278,13 @@ func (d *deployer) Status(ctx context.Context, dr types.DeployRepo, needDetails 
 			return "", common.RunTimeError, nil, fmt.Errorf("can't get deploy status, %w", err)
 		}
 		rstatus.Instances = status.Instances
+		deployStatus = status.Code
 
 	}
 	if rstatus.DeployID == 0 || rstatus.DeployID >= deploy.ID {
-		return svcName, rstatus.Code, rstatus.Instances, nil
+		return svcName, deployStatus, rstatus.Instances, nil
 	}
-	return svcName, deploy.Status, rstatus.Instances, nil
+	return svcName, deployStatus, rstatus.Instances, nil
 }
 
 func (d *deployer) Logs(ctx context.Context, dr types.DeployRepo) (*MultiLogReader, error) {
@@ -540,7 +540,6 @@ func (d *deployer) UpdateDeploy(ctx context.Context, dur *types.DeployUpdateReq,
 
 	if resource != nil {
 		deploy.Hardware = resource.Resources
-		deploy.CostPerHour = resource.CostPerHour
 		deploy.SKU = strconv.FormatInt(resource.ID, 10)
 	}
 

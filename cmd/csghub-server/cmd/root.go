@@ -9,11 +9,12 @@ import (
 	"opencsg.com/csghub-server/cmd/csghub-server/cmd/accounting"
 	"opencsg.com/csghub-server/cmd/csghub-server/cmd/cron"
 	"opencsg.com/csghub-server/cmd/csghub-server/cmd/deploy"
+	"opencsg.com/csghub-server/cmd/csghub-server/cmd/git"
 	"opencsg.com/csghub-server/cmd/csghub-server/cmd/logscan"
 	"opencsg.com/csghub-server/cmd/csghub-server/cmd/migration"
 	"opencsg.com/csghub-server/cmd/csghub-server/cmd/mirror"
 	"opencsg.com/csghub-server/cmd/csghub-server/cmd/start"
-	"opencsg.com/csghub-server/cmd/csghub-server/cmd/syncversion"
+	"opencsg.com/csghub-server/cmd/csghub-server/cmd/sync"
 	"opencsg.com/csghub-server/cmd/csghub-server/cmd/trigger"
 	"opencsg.com/csghub-server/cmd/csghub-server/cmd/user"
 )
@@ -54,8 +55,9 @@ func init() {
 		cron.Cmd,
 		mirror.Cmd,
 		accounting.Cmd,
-		syncversion.Cmd,
+		sync.Cmd,
 		user.Cmd,
+		git.Cmd,
 	)
 }
 

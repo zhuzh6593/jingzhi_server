@@ -159,6 +159,46 @@ const docTemplate = `{
                 }
             }
         },
+        "/cluster/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "Get cluster by id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cluster"
+                ],
+                "summary": "Get cluster by id",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
         "/codes": {
             "get": {
                 "security": [
@@ -1094,6 +1134,125 @@ const docTemplate = `{
                 }
             }
         },
+        "/comments/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "update a comment content by id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Discussion"
+                ],
+                "summary": "Update a comment content by id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "the comment id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "current user, the owner of the comment",
+                        "name": "current_user",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/component.UpdateCommentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "delete a comment by id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Discussion"
+                ],
+                "summary": "Delete a comment by id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "the comment id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "current user, the owner of the comment",
+                        "name": "current_user",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
         "/datasets": {
             "get": {
                 "security": [
@@ -1713,6 +1872,316 @@ const docTemplate = `{
                 }
             }
         },
+        "/discussions/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "show a discussion",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Discussion"
+                ],
+                "summary": "Show a discussion and its comments",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "the discussion id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/component.ShowDiscussionResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "update a discussion",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Discussion"
+                ],
+                "summary": "Update a discussion",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "the discussion id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "current user, the owner",
+                        "name": "current_user",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/component.UpdateDiscussionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "delete a discussion",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Discussion"
+                ],
+                "summary": "Delete a discussion",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "the discussion id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "current user, the owner of the discussion",
+                        "name": "current_user",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/discussions/{id}/comments": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "list discussion comments",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Discussion"
+                ],
+                "summary": "List discussion comments",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "the discussion id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/component.DiscussionResponse_Comment"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "create a new discussion comment",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Discussion"
+                ],
+                "summary": "Create a new discussion comment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "the discussion id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/component.CreateCommentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/component.CreateCommentResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
         "/events": {
             "post": {
                 "consumes": [
@@ -1744,6 +2213,104 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/jwt/token": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "JWT"
+                ],
+                "summary": "generate jwt token for user",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.CreateJWTReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.CreateJWTResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/jwt/{token}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "JWT"
+                ],
+                "summary": "verify jwt token and return user info",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "token",
+                        "name": "token",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.User"
                         }
                     },
                     "400": {
@@ -2351,6 +2918,79 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/mirrors": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Mirror"
+                ],
+                "summary": "Get mirrors",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "per",
+                        "name": "per",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "page",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/types.Mirror"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -4185,6 +4825,1150 @@ const docTemplate = `{
                 }
             }
         },
+        "/namespace/{path}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "get namespace info",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Namespace",
+                    "InternalOnly"
+                ],
+                "summary": "Get namespace info [Internal Only].",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "namespace",
+                        "name": "path",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/types.Namespace"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/organization/{namespace}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Get organization info",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "the op user",
+                        "name": "current_user",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/types.Organization"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "update organization",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Update organization",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "the op user",
+                        "name": "current_user",
+                        "in": "query"
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.EditOrgReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/database.Organization"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "delete organization",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Delete organization",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "the op user",
+                        "name": "current_user",
+                        "in": "query"
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.DeleteOrgReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/organization/{namespace}/codes": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Get organization codes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "org name",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "current user name",
+                        "name": "current_user",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page size",
+                        "name": "per",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "current page number",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.ResponseWithTotal"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/types.Code"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/organization/{namespace}/collections": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Get organization Collections",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "org name",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "current user name",
+                        "name": "current_user",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page size",
+                        "name": "per",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "current page number",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.ResponseWithTotal"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/types.Collection"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/organization/{namespace}/datasets": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "get organization datasets",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Get organization datasets",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "org name",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "current user name",
+                        "name": "current_user",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page size",
+                        "name": "per",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "current page number",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.ResponseWithTotal"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/types.Dataset"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/organization/{namespace}/members": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Member"
+                ],
+                "summary": "Get organization members. Org member can get more details.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "the op user",
+                        "name": "current_user",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "per",
+                        "name": "per",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "per page",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.ResponseWithTotal"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        " total": {
+                                            "type": "integer"
+                                        },
+                                        "data": {
+                                            "$ref": "#/definitions/types.Member"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "user will be added to org with a role",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Member"
+                ],
+                "summary": "Create new membership between org and user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "org name",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "the op user",
+                        "name": "current_user",
+                        "in": "query"
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.Create.addMemberRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/organization/{namespace}/members/{username}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Member"
+                ],
+                "summary": "Get user's role in an org",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "org name",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "user name",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "the op user",
+                        "name": "current_user",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Member"
+                ],
+                "summary": "update user membership",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "org name",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "user name",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "the op user",
+                        "name": "current_user",
+                        "in": "query"
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.Update.updateMemberRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "user's role will be remove from org",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Member"
+                ],
+                "summary": "Remove membership between org and user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "org name",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "user name",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "the op user",
+                        "name": "current_user",
+                        "in": "query"
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.Delete.removeMemberRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/organization/{namespace}/models": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "get organization models",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Get organization models",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "org name",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "current user name",
+                        "name": "current_user",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page size",
+                        "name": "per",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "current page number",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.ResponseWithTotal"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/types.Model"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/organization/{namespace}/spaces": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Get organization Spaces",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "org name",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "current user name",
+                        "name": "current_user",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page size",
+                        "name": "per",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "current page number",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.ResponseWithTotal"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/types.Space"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/organizations": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "get organizations",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Get organizations",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/types.Organization"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "create a new organization",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organization"
+                ],
+                "summary": "Create a new organization",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "the op user",
+                        "name": "current_user",
+                        "in": "query"
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.CreateOrgReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/types.Organization"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
         "/recom/opweight": {
             "post": {
                 "security": [
@@ -4518,6 +6302,167 @@ const docTemplate = `{
                 }
             }
         },
+        "/runtime_framework/{id}/architecture": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "get runtime framework architectures",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "RuntimeFramework"
+                ],
+                "summary": "Get runtime framework architectures",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "runtime framework id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "set runtime framework architectures",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "RuntimeFramework"
+                ],
+                "summary": "Set runtime framework architectures",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "runtime framework id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.RuntimeArchitecture"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "Delete runtime framework architectures",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "RuntimeFramework"
+                ],
+                "summary": "Delete runtime framework architectures",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "runtime framework id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.RuntimeArchitecture"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
         "/runtime_framework/{id}/models": {
             "get": {
                 "security": [
@@ -4575,6 +6520,75 @@ const docTemplate = `{
                         "description": "deploy_type",
                         "name": "deploy_type",
                         "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/runtime_framework/{id}/scan": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "Scan runtime architecture",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "RuntimeFramework"
+                ],
+                "summary": "Scan runtime architecture",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "runtime framework id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            0,
+                            1,
+                            2
+                        ],
+                        "type": "integer",
+                        "description": "scan_type(0:all models, 1:new models, 2:old models)",
+                        "name": "scan_type",
+                        "in": "query"
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.RuntimeFrameworkModels"
+                        }
                     }
                 ],
                 "responses": {
@@ -6073,6 +8087,477 @@ const docTemplate = `{
                 }
             }
         },
+        "/token/{app}/{token_name}": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Access token"
+                ],
+                "summary": "Refresh a access token for a user",
+                "parameters": [
+                    {
+                        "enum": [
+                            "git",
+                            "starship"
+                        ],
+                        "type": "string",
+                        "description": "application",
+                        "name": "app",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "token_name",
+                        "name": "token_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "current user, the owner",
+                        "name": "current_user",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "new expire time, in format RFC3339, like 2006-01-02T15:04:05Z07:00",
+                        "name": "expired_at",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Access token"
+                ],
+                "summary": "Create access token for an special application",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "token name",
+                        "name": "token_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "git",
+                            "starship"
+                        ],
+                        "type": "string",
+                        "description": "application",
+                        "name": "app",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "current user, the owner",
+                        "name": "current_user",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.CreateUserTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/database.AccessToken"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Access token"
+                ],
+                "summary": "Delete access token of a app",
+                "parameters": [
+                    {
+                        "enum": [
+                            "git",
+                            "starship"
+                        ],
+                        "type": "string",
+                        "description": "application",
+                        "name": "app",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "token_name",
+                        "name": "token_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "current user, the owner",
+                        "name": "current_user",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/token/{token_value}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Access token"
+                ],
+                "summary": "Get token and owner's detail by the token value",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "token_value",
+                        "name": "token_value",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "git",
+                            "starship"
+                        ],
+                        "type": "string",
+                        "description": "application",
+                        "name": "app",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/{username}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Get user info. Admin and the user self can see full info, other users can only see basic info.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "username",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "current user",
+                        "name": "current_user",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/types.User"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "update user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Update user. If change user name, should only send 'new_username' in the request body.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "username",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "current user",
+                        "name": "current_user",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.UpdateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Delete user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "username",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "current user",
+                        "name": "current_user",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.UpdateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
         "/user/{username}/codes": {
             "get": {
                 "security": [
@@ -7377,6 +9862,216 @@ const docTemplate = `{
                 }
             }
         },
+        "/user/{username}/tokens": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Access token"
+                ],
+                "summary": "Get all access tokens for a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "username",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "current user name",
+                        "name": "current_user",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "git",
+                            "starship"
+                        ],
+                        "type": "string",
+                        "description": "application",
+                        "name": "app",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "create access token for a user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Access token"
+                ],
+                "summary": "[Deprecated: use POST:/token/{app}/{username} instead]",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "username",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "current user, the owner",
+                        "name": "current_user",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.CreateUserTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/database.AccessToken"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/{username}/tokens/{token_name}": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Access token"
+                ],
+                "summary": "[Deprecated: use DELETE:/token/{app}/{token_name} instead]",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "username",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "token_name",
+                        "name": "token_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "current user, the owner",
+                        "name": "current_user",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.DeleteUserTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
         "/{repo_type}/{namespace}/{name}/blob/{file_path}": {
             "get": {
                 "security": [
@@ -7755,6 +10450,188 @@ const docTemplate = `{
                                             "items": {
                                                 "$ref": "#/definitions/types.Commit"
                                             }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/{repo_type}/{namespace}/{name}/discussions": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "list repo discussions",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Discussion"
+                ],
+                "summary": "List repo discussions",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "current user",
+                        "name": "current_user",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "models",
+                            "datasets",
+                            "codes",
+                            "spaces"
+                        ],
+                        "type": "string",
+                        "description": "repository type",
+                        "name": "repo_type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "name",
+                        "name": "name",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/component.ListRepoDiscussionResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "description": "create a new repo discussion",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Discussion"
+                ],
+                "summary": "Create a new repo discussion",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "current user, the owner",
+                        "name": "current_user",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "models",
+                            "datasets",
+                            "codes",
+                            "spaces"
+                        ],
+                        "type": "string",
+                        "description": "repository type",
+                        "name": "repo_type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/component.CreateRepoDiscussionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/component.CreateDiscussionResponse"
                                         }
                                     }
                                 }
@@ -9948,6 +12825,162 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "component.CreateCommentRequest": {
+            "type": "object",
+            "required": [
+                "content"
+            ],
+            "properties": {
+                "commentable_id": {
+                    "type": "integer"
+                },
+                "commentable_type": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                }
+            }
+        },
+        "component.CreateCommentResponse": {
+            "type": "object",
+            "properties": {
+                "commentable_id": {
+                    "type": "integer"
+                },
+                "commentable_type": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "user": {
+                    "$ref": "#/definitions/component.DiscussionResponse_User"
+                }
+            }
+        },
+        "component.CreateDiscussionResponse": {
+            "type": "object",
+            "properties": {
+                "comment_count": {
+                    "description": "DiscussionableID   int64     ` + "`" + `json:\"discussionable_id\"` + "`" + `\nDiscussionableType string    ` + "`" + `json:\"discussionable_type\"` + "`" + `",
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/component.DiscussionResponse_User"
+                }
+            }
+        },
+        "component.CreateRepoDiscussionRequest": {
+            "type": "object",
+            "required": [
+                "title"
+            ],
+            "properties": {
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "component.DiscussionResponse_Comment": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "user": {
+                    "$ref": "#/definitions/component.DiscussionResponse_User"
+                }
+            }
+        },
+        "component.DiscussionResponse_User": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "component.ListRepoDiscussionResponse": {
+            "type": "object",
+            "properties": {
+                "discussions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/component.CreateDiscussionResponse"
+                    }
+                }
+            }
+        },
+        "component.ShowDiscussionResponse": {
+            "type": "object",
+            "properties": {
+                "comment_count": {
+                    "type": "integer"
+                },
+                "comments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/component.DiscussionResponse_Comment"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/component.DiscussionResponse_User"
+                }
+            }
+        },
+        "component.UpdateCommentRequest": {
+            "type": "object",
+            "required": [
+                "content"
+            ],
+            "properties": {
+                "content": {
+                    "type": "string"
+                }
+            }
+        },
+        "component.UpdateDiscussionRequest": {
+            "type": "object",
+            "required": [
+                "title"
+            ],
+            "properties": {
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "database.AccessToken": {
             "type": "object",
             "properties": {
@@ -10117,6 +13150,12 @@ const docTemplate = `{
                 "mirror_task_id": {
                     "type": "integer"
                 },
+                "next_execution_timestamp": {
+                    "type": "string"
+                },
+                "priority": {
+                    "$ref": "#/definitions/types.MirrorPriority"
+                },
                 "progress": {
                     "type": "integer"
                 },
@@ -10166,6 +13205,9 @@ const docTemplate = `{
         "database.Model": {
             "type": "object",
             "properties": {
+                "base_model": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -10225,6 +13267,57 @@ const docTemplate = `{
                 "UserNamespace",
                 "OrgNamespace"
             ]
+        },
+        "database.Organization": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "git_path": {
+                    "type": "string"
+                },
+                "homepage": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "logo": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "$ref": "#/definitions/database.Namespace"
+                },
+                "namespace_id": {
+                    "type": "integer"
+                },
+                "org_type": {
+                    "type": "string"
+                },
+                "path": {
+                    "description": "unique name of the organization",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/database.User"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "verified": {
+                    "type": "boolean"
+                }
+            }
         },
         "database.Repository": {
             "type": "object",
@@ -10350,6 +13443,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "created_at": {
+                    "type": "string"
+                },
+                "fingerprint_sha256": {
                     "type": "string"
                 },
                 "git_id": {
@@ -10529,6 +13625,34 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.Create.addMemberRequest": {
+            "type": "object",
+            "required": [
+                "role",
+                "users"
+            ],
+            "properties": {
+                "role": {
+                    "type": "string"
+                },
+                "users": {
+                    "description": "name of user will be added to the org as a member",
+                    "type": "string",
+                    "example": "user1,user2"
+                }
+            }
+        },
+        "handler.Delete.removeMemberRequest": {
+            "type": "object",
+            "required": [
+                "role"
+            ],
+            "properties": {
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.SetOpWeight.SetOpWeightReq": {
             "type": "object",
             "required": [
@@ -10541,6 +13665,21 @@ const docTemplate = `{
                 },
                 "weight": {
                     "type": "integer"
+                }
+            }
+        },
+        "handler.Update.updateMemberRequest": {
+            "type": "object",
+            "required": [
+                "new_role",
+                "old_role"
+            ],
+            "properties": {
+                "new_role": {
+                    "type": "string"
+                },
+                "old_role": {
+                    "type": "string"
                 }
             }
         },
@@ -10735,6 +13874,9 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "license": {
+                    "type": "string"
+                },
                 "likes": {
                     "type": "integer"
                 },
@@ -10785,6 +13927,9 @@ const docTemplate = `{
         "types.Collection": {
             "type": "object",
             "properties": {
+                "avatar": {
+                    "type": "string"
+                },
                 "can_manage": {
                     "type": "boolean"
                 },
@@ -10804,6 +13949,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "namespace": {
                     "type": "string"
                 },
                 "nickname": {
@@ -10864,6 +14012,9 @@ const docTemplate = `{
                 },
                 "repository_type": {
                     "$ref": "#/definitions/types.RepositoryType"
+                },
+                "status": {
+                    "type": "string"
                 },
                 "tags": {
                     "type": "array",
@@ -11098,11 +14249,24 @@ const docTemplate = `{
                 "content": {
                     "type": "string"
                 },
+                "current_user": {
+                    "type": "string"
+                },
                 "message": {
                     "type": "string"
                 },
                 "new_branch": {
                     "type": "string"
+                },
+                "original_content": {
+                    "description": "Use for lfs file",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "pointer": {
+                    "$ref": "#/definitions/types.Pointer"
                 }
             }
         },
@@ -11165,6 +14329,9 @@ const docTemplate = `{
                 "branch": {
                     "type": "string"
                 },
+                "current_user": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -11204,6 +14371,9 @@ const docTemplate = `{
                 "source_name"
             ],
             "properties": {
+                "current_user": {
+                    "type": "string"
+                },
                 "info_api_url": {
                     "type": "string"
                 },
@@ -11215,6 +14385,9 @@ const docTemplate = `{
         "types.CreateModelReq": {
             "type": "object",
             "properties": {
+                "base_model": {
+                    "type": "string"
+                },
                 "default_branch": {
                     "type": "string",
                     "example": "main"
@@ -11247,6 +14420,41 @@ const docTemplate = `{
                 },
                 "readme": {
                     "type": "string"
+                }
+            }
+        },
+        "types.CreateOrgReq": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "org description"
+                },
+                "homepage": {
+                    "type": "string",
+                    "example": "https://www.example.com"
+                },
+                "logo": {
+                    "type": "string",
+                    "example": "https://www.example.com/logo.png"
+                },
+                "name": {
+                    "description": "Org unique identifier",
+                    "type": "string",
+                    "example": "org_name_1"
+                },
+                "nickname": {
+                    "description": "Display name",
+                    "type": "string",
+                    "example": "org_display_name"
+                },
+                "org_type": {
+                    "type": "string",
+                    "example": "company or school etc"
+                },
+                "verified": {
+                    "type": "boolean",
+                    "example": false
                 }
             }
         },
@@ -11332,16 +14540,12 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "cluster_id",
-                "cost_per_hour",
                 "name",
                 "resources"
             ],
             "properties": {
                 "cluster_id": {
                     "type": "string"
-                },
-                "cost_per_hour": {
-                    "type": "number"
                 },
                 "name": {
                     "type": "string"
@@ -11383,6 +14587,29 @@ const docTemplate = `{
                 }
             }
         },
+        "types.CreateUserTokenRequest": {
+            "type": "object",
+            "properties": {
+                "application": {
+                    "description": "default to csghub",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.AccessTokenApp"
+                        }
+                    ]
+                },
+                "expired_at": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "permission": {
+                    "description": "default to empty, means full permission",
+                    "type": "string"
+                }
+            }
+        },
         "types.Dataset": {
             "type": "object",
             "properties": {
@@ -11406,6 +14633,9 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
+                },
+                "license": {
+                    "type": "string"
                 },
                 "likes": {
                     "type": "integer"
@@ -11489,6 +14719,32 @@ const docTemplate = `{
                 }
             }
         },
+        "types.DeleteOrgReq": {
+            "type": "object"
+        },
+        "types.DeleteUserTokenRequest": {
+            "type": "object",
+            "properties": {
+                "application": {
+                    "description": "default to csghub",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.AccessTokenApp"
+                        }
+                    ]
+                },
+                "expired_at": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "permission": {
+                    "description": "default to empty, means full permission",
+                    "type": "string"
+                }
+            }
+        },
         "types.DeployUpdateReq": {
             "type": "object",
             "properties": {
@@ -11520,6 +14776,36 @@ const docTemplate = `{
                 },
                 "secure_level": {
                     "type": "integer"
+                }
+            }
+        },
+        "types.EditOrgReq": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "org description"
+                },
+                "homepage": {
+                    "type": "string",
+                    "example": "https://www.example.com"
+                },
+                "logo": {
+                    "type": "string",
+                    "example": "https://www.example.com/logo.png"
+                },
+                "nickname": {
+                    "description": "Display name",
+                    "type": "string",
+                    "example": "org display name"
+                },
+                "org_type": {
+                    "type": "string",
+                    "example": "company or school etc"
+                },
+                "verified": {
+                    "type": "boolean",
+                    "example": false
                 }
             }
         },
@@ -11630,6 +14916,91 @@ const docTemplate = `{
                 }
             }
         },
+        "types.Member": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "last_login_at": {
+                    "type": "string"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "uuid": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.Mirror": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "description": "source access token",
+                    "type": "string"
+                },
+                "last_message": {
+                    "type": "string"
+                },
+                "last_updated_at": {
+                    "type": "string"
+                },
+                "local_repo_path": {
+                    "type": "string"
+                },
+                "mirror_source": {
+                    "$ref": "#/definitions/types.MirrorSource"
+                },
+                "progress": {
+                    "type": "integer"
+                },
+                "push_access_token": {
+                    "type": "string"
+                },
+                "push_url": {
+                    "type": "string"
+                },
+                "push_username": {
+                    "type": "string"
+                },
+                "repository": {
+                    "$ref": "#/definitions/types.Repository"
+                },
+                "source_repo_path": {
+                    "type": "string"
+                },
+                "source_url": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/types.MirrorTaskStatus"
+                },
+                "username": {
+                    "description": "source user name",
+                    "type": "string"
+                }
+            }
+        },
+        "types.MirrorPriority": {
+            "type": "integer",
+            "enum": [
+                3,
+                2,
+                1
+            ],
+            "x-enum-varnames": [
+                "HighMirrorPriority",
+                "MediumMirrorPriority",
+                "LowMirrorPriority"
+            ]
+        },
         "types.MirrorRepo": {
             "type": "object",
             "properties": {
@@ -11647,11 +15018,20 @@ const docTemplate = `{
                 }
             }
         },
+        "types.MirrorSource": {
+            "type": "object",
+            "properties": {
+                "source_name": {
+                    "type": "string"
+                }
+            }
+        },
         "types.MirrorTaskStatus": {
             "type": "string",
             "enum": [
                 "waiting",
                 "running",
+                "repo_synced",
                 "finished",
                 "failed",
                 "incomplete"
@@ -11659,6 +15039,7 @@ const docTemplate = `{
             "x-enum-varnames": [
                 "MirrorWaiting",
                 "MirrorRunning",
+                "MirrorRepoSynced",
                 "MirrorFinished",
                 "MirrorFailed",
                 "MirrorIncomplete"
@@ -11667,6 +15048,9 @@ const docTemplate = `{
         "types.Model": {
             "type": "object",
             "properties": {
+                "base_model": {
+                    "type": "string"
+                },
                 "can_manage": {
                     "type": "boolean"
                 },
@@ -11693,6 +15077,9 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
+                },
+                "license": {
+                    "type": "string"
                 },
                 "likes": {
                     "type": "integer"
@@ -11881,8 +15268,25 @@ const docTemplate = `{
                     "description": "unique name of the organization",
                     "type": "string"
                 },
+                "user_id": {
+                    "type": "integer"
+                },
                 "verified": {
                     "type": "boolean"
+                }
+            }
+        },
+        "types.Pointer": {
+            "type": "object",
+            "properties": {
+                "download_url": {
+                    "type": "string"
+                },
+                "oid": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "integer"
                 }
             }
         },
@@ -12023,6 +15427,17 @@ const docTemplate = `{
                 },
                 "total": {
                     "type": "integer"
+                }
+            }
+        },
+        "types.RuntimeArchitecture": {
+            "type": "object",
+            "properties": {
+                "architectures": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -12214,9 +15629,6 @@ const docTemplate = `{
         "types.SpaceResource": {
             "type": "object",
             "properties": {
-                "cost_per_hour": {
-                    "type": "number"
-                },
                 "id": {
                     "type": "integer"
                 },
@@ -12352,6 +15764,16 @@ const docTemplate = `{
                 "origin_path": {
                     "type": "string"
                 },
+                "original_content": {
+                    "description": "Use for lfs file",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "pointer": {
+                    "$ref": "#/definitions/types.Pointer"
+                },
                 "repoType": {
                     "$ref": "#/definitions/types.RepositoryType"
                 },
@@ -12386,6 +15808,9 @@ const docTemplate = `{
                 "source_name"
             ],
             "properties": {
+                "current_user": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -12400,6 +15825,9 @@ const docTemplate = `{
         "types.UpdateModelReq": {
             "type": "object",
             "properties": {
+                "base_model": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -12455,9 +15883,6 @@ const docTemplate = `{
         "types.UpdateSpaceResourceReq": {
             "type": "object",
             "properties": {
-                "cost_per_hour": {
-                    "type": "number"
-                },
                 "name": {
                     "type": "string"
                 },
@@ -12480,6 +15905,49 @@ const docTemplate = `{
                 }
             }
         },
+        "types.UpdateUserRequest": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "bio": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "homepage": {
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Display name of the user",
+                    "type": "string"
+                },
+                "new_username": {
+                    "description": "if use want to change username, this should be the only field to send in request body",
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "roles": {
+                    "description": "should be updated by admin",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[super_user",
+                        " admin",
+                        " personal_user]"
+                    ]
+                },
+                "uuid": {
+                    "type": "string"
+                }
+            }
+        },
         "types.User": {
             "type": "object",
             "properties": {
@@ -12497,6 +15965,9 @@ const docTemplate = `{
                 },
                 "homepage": {
                     "type": "string"
+                },
+                "id": {
+                    "type": "integer"
                 },
                 "last_login_at": {
                     "type": "string"
