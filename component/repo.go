@@ -363,7 +363,7 @@ func (c *RepoComponent) PublicToUser(ctx context.Context, repoType types.Reposit
 
 		isAdmin = dbUser.CanAdmin()
 
-		if !dbUser.CanAdmin() {
+		if !isAdmin {
 			repoOwnerIDs = append(repoOwnerIDs, user.ID)
 			//get user's orgs
 			for _, org := range user.Orgs {
