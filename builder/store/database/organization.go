@@ -70,6 +70,9 @@ func (s *OrgStore) GetUserOwnOrgs(ctx context.Context, username string, req type
 			Join("JOIN users AS u ON u.id = organization.user_id").
 			Where("u.username =?", username)
 	}
+
+	query = query.Order("organization.updated_at DESC")
+
 	total = 0
 
 	if supportPagination {
