@@ -58,6 +58,9 @@ type User struct {
 	// GitToken        string `bun:"," json:"git_token"`
 	// StarhubSynced   bool   `bun:"," json:"starhub_synced"`
 	// GitTokenName string `bun:"," json:"git_token_name"`
+	Bilibili string `bun:"," json:"bilibili"`
+	Weibo    string `bun:"," json:"weibo"`
+	Balance  int    `bun:"," json:"balance"`
 
 	times
 }
@@ -82,6 +85,25 @@ func (u *User) SetRoles(roles []string) {
 
 func (s *UserStore) Index(ctx context.Context) (users []User, err error) {
 	err = s.db.Operator.Core.NewSelect().Model(&users).Scan(ctx, &users)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (s *UserStore) IndexWithSearch(ctx context.Context, search string, per, page int) (users []User, count int, err error) {
+	search = strings.ToLower(search)
+	query := s.db.Operator.Core.NewSelect().
+		Model(&users)
+	if search != "" {
+		query.Where("LOWER(username) like ? OR LOWER(email) like ?", fmt.Sprintf("%%%s%%", search), fmt.Sprintf("%%%s%%", search))
+	}
+	count, err = query.Count(ctx)
+	if err != nil {
+		return
+	}
+	query.Order("id asc").Limit(per).Offset((page - 1) * per)
+	err = query.Scan(ctx, &users)
 	if err != nil {
 		return
 	}
@@ -211,4 +233,13 @@ func (s *UserStore) GetActiveUserCount(ctx context.Context) (int, error) {
 		NewSelect().
 		Model(&User{}).
 		Count(ctx)
+}
+
+func (s *UserStore) AddBalance(ctx context.Context, user User, value int) error {
+	user.Balance += value
+	_, err := s.db.Operator.Core.NewUpdate().Model(&user).Column("balance").WherePK().Exec(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
 }

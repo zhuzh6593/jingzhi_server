@@ -11,6 +11,7 @@ type CreateOrgReq struct {
 	Logo        string `json:"logo,omitempty" example:"https://www.example.com/logo.png"`
 	Verified    bool   `json:"verified" example:"false"`
 	OrgType     string `json:"org_type" example:"company or school etc"`
+	Industry    string `json:"industry"`
 }
 
 func (c *CreateOrgReq) SensName() string {
@@ -41,6 +42,7 @@ type EditOrgReq struct {
 	Verified    *bool   `json:"verified" example:"false"`
 	OrgType     *string `json:"org_type" example:"company or school etc"`
 	CurrentUser string  `json:"-"`
+	Industry    *string `json:"industry"`
 }
 
 func (e *EditOrgReq) SensName() string {
@@ -90,13 +92,15 @@ type (
 
 type Organization struct {
 	// unique name of the organization
-	Name     string `json:"path"`
-	Nickname string `json:"name,omitempty"`
-	Homepage string `json:"homepage,omitempty"`
-	Logo     string `json:"logo,omitempty"`
-	OrgType  string `json:"org_type,omitempty"`
-	Verified bool   `json:"verified"`
-	UserID   int64  `json:"user_id,omitempty"`
+	Name        string `json:"path"`
+	Nickname    string `json:"name,omitempty"`
+	Homepage    string `json:"homepage,omitempty"`
+	Logo        string `json:"logo,omitempty"`
+	OrgType     string `json:"org_type,omitempty"`
+	Verified    bool   `json:"verified"`
+	UserID      int64  `json:"user_id,omitempty"`
+	Industry    string `json:"industry"`
+	Description string `json:"description"`
 }
 
 type Member struct {
@@ -106,4 +110,12 @@ type Member struct {
 	Avatar      string `json:"avatar,omitempty"`
 	Role        string `json:"role,omitempty"`
 	LastLoginAt string `json:"last_login_at,omitempty"`
+}
+
+type SearchOrgReq struct {
+	OrgType  string `json:"org_type"`
+	Industry string `json:"industry"`
+	Search   string `json:"search"`
+	Page     int    `json:"page"`
+	PageSize int    `json:"page_size"`
 }

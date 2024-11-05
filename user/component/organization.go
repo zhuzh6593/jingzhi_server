@@ -102,6 +102,7 @@ func (c *OrganizationComponent) Create(ctx context.Context, req *types.CreateOrg
 		Path:   dbOrg.Name,
 		UserID: user.ID,
 	}
+	dbOrg.Industry = req.Industry
 	err = c.os.Create(ctx, dbOrg, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed create database organization, error: %w", err)
@@ -128,24 +129,26 @@ func (c *OrganizationComponent) Create(ctx context.Context, req *types.CreateOrg
 	return org, err
 }
 
-func (c *OrganizationComponent) Index(ctx context.Context, username string) ([]types.Organization, error) {
-	dborgs, err := c.os.GetUserOwnOrgs(ctx, username)
+func (c *OrganizationComponent) Index(ctx context.Context, username string, req types.SearchOrgReq) ([]types.Organization, int, error) {
+	dborgs, total, err := c.os.GetUserOwnOrgs(ctx, username, req, true)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get organizations, error: %w", err)
+		return nil, 0, fmt.Errorf("failed to get organizations, error: %w", err)
 	}
 	var orgs []types.Organization
 	for _, dborg := range dborgs {
 		org := types.Organization{
-			Name:     dborg.Name,
-			Nickname: dborg.Nickname,
-			Homepage: dborg.Homepage,
-			Logo:     dborg.Logo,
-			OrgType:  dborg.OrgType,
-			Verified: dborg.Verified,
+			Name:        dborg.Name,
+			Nickname:    dborg.Nickname,
+			Homepage:    dborg.Homepage,
+			Logo:        dborg.Logo,
+			OrgType:     dborg.OrgType,
+			Verified:    dborg.Verified,
+			Industry:    dborg.Industry,
+			Description: dborg.Description,
 		}
 		orgs = append(orgs, org)
 	}
-	return orgs, nil
+	return orgs, total, nil
 }
 
 func (c *OrganizationComponent) Get(ctx context.Context, orgName string) (*types.Organization, error) {
@@ -214,6 +217,9 @@ func (c *OrganizationComponent) Update(ctx context.Context, req *types.EditOrgRe
 	}
 	if req.OrgType != nil {
 		org.OrgType = *req.OrgType
+	}
+	if req.Industry != nil {
+		org.Industry = *req.Industry
 	}
 	err = c.os.Update(ctx, &org)
 	if err != nil {

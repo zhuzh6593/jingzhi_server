@@ -108,20 +108,48 @@ func (h *OrganizationHandler) Get(ctx *gin.Context) {
 // @Tags         Organization
 // @Accept       json
 // @Produce      json
+// @Param        org_type query string false "org type"
+// @Param        industry query string false "industry"
+// @Param        search query string false "search"
+// @Param        per query int false "page size"
+// @Param        page query int false "current page number"
 // @Success      200  {object}  types.Response{data=[]types.Organization} "OK"
 // @Failure      500  {object}  types.APIInternalServerError "Internal server error"
 // @Router       /organizations [get]
 func (h *OrganizationHandler) Index(ctx *gin.Context) {
 	username := httpbase.GetCurrentUser(ctx)
-	orgs, err := h.c.Index(ctx, username)
+
+	per, page, err := common.GetPerAndPageFromContext(ctx)
+	if err != nil {
+		slog.Error("Bad request format", "error", err)
+		httpbase.BadRequest(ctx, err.Error())
+		return
+	}
+
+	orgType := ctx.Query("org_type")
+	industry := ctx.Query("industry")
+	search := ctx.Query("search")
+
+	req := types.SearchOrgReq{
+		OrgType:  orgType,
+		Industry: industry,
+		Search:   search,
+		Page:     page,
+		PageSize: per,
+	}
+
+	orgs, total, err := h.c.Index(ctx, username, req)
 	if err != nil {
 		slog.Error("Failed to get organizations", slog.Any("error", err))
 		httpbase.ServerError(ctx, err)
 		return
 	}
-
-	slog.Info("Get organizations succeed")
-	httpbase.OK(ctx, orgs)
+	respData := gin.H{
+		"message": "OK",
+		"data":    orgs,
+		"total":   total,
+	}
+	httpbase.OK(ctx, respData)
 }
 
 // DeleteOrganization godoc

@@ -5871,6 +5871,38 @@ const docTemplate = `{
                     "Organization"
                 ],
                 "summary": "Get organizations",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "org type",
+                        "name": "org_type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "industry",
+                        "name": "industry",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "search",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page size",
+                        "name": "per",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "current page number",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -10072,6 +10104,72 @@ const docTemplate = `{
                 }
             }
         },
+        "/users": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Get users info. Only Admin",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "search",
+                        "name": "search",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/types.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/types.User"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIBadRequest"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
         "/{repo_type}/{namespace}/{name}/blob/{file_path}": {
             "get": {
                 "security": [
@@ -13286,6 +13384,9 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "industry": {
+                    "type": "string"
+                },
                 "logo": {
                     "type": "string"
                 },
@@ -13553,6 +13654,13 @@ const docTemplate = `{
                 "avatar": {
                     "type": "string"
                 },
+                "balance": {
+                    "type": "integer"
+                },
+                "bilibili": {
+                    "description": "WechatID     string ` + "`" + `bun:\",\" json:\"wechat_id\"` + "`" + `\nGithubID     string ` + "`" + `bun:\",\" json:\"github_id\"` + "`" + `\nGitlabID     string ` + "`" + `bun:\",\" json:\"gitlab_id\"` + "`" + `\nSessionIP    string ` + "`" + `bun:\",\" json:\"session_ip\"` + "`" + `\nNickname        string ` + "`" + `bun:\",\" json:\"nickname\"` + "`" + `\nGitToken        string ` + "`" + `bun:\",\" json:\"git_token\"` + "`" + `\nStarhubSynced   bool   ` + "`" + `bun:\",\" json:\"starhub_synced\"` + "`" + `\nGitTokenName string ` + "`" + `bun:\",\" json:\"git_token_name\"` + "`" + `",
+                    "type": "string"
+                },
                 "bio": {
                     "type": "string"
                 },
@@ -13621,6 +13729,9 @@ const docTemplate = `{
                 },
                 "uuid": {
                     "description": "TODO:add unique index after migration",
+                    "type": "string"
+                },
+                "weibo": {
                     "type": "string"
                 }
             }
@@ -14434,6 +14545,9 @@ const docTemplate = `{
                     "type": "string",
                     "example": "https://www.example.com"
                 },
+                "industry": {
+                    "type": "string"
+                },
                 "logo": {
                     "type": "string",
                     "example": "https://www.example.com/logo.png"
@@ -14789,6 +14903,9 @@ const docTemplate = `{
                 "homepage": {
                     "type": "string",
                     "example": "https://www.example.com"
+                },
+                "industry": {
+                    "type": "string"
                 },
                 "logo": {
                     "type": "string",
@@ -15252,7 +15369,13 @@ const docTemplate = `{
         "types.Organization": {
             "type": "object",
             "properties": {
+                "description": {
+                    "type": "string"
+                },
                 "homepage": {
+                    "type": "string"
+                },
+                "industry": {
                     "type": "string"
                 },
                 "logo": {
@@ -15911,6 +16034,9 @@ const docTemplate = `{
                 "avatar": {
                     "type": "string"
                 },
+                "bilibili": {
+                    "type": "string"
+                },
                 "bio": {
                     "type": "string"
                 },
@@ -15945,6 +16071,9 @@ const docTemplate = `{
                 },
                 "uuid": {
                     "type": "string"
+                },
+                "weibo": {
+                    "type": "string"
                 }
             }
         },
@@ -15952,6 +16081,12 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "avatar": {
+                    "type": "string"
+                },
+                "balance": {
+                    "type": "integer"
+                },
+                "bilibili": {
                     "type": "string"
                 },
                 "bio": {
@@ -15994,6 +16129,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "uuid": {
+                    "type": "string"
+                },
+                "weibo": {
                     "type": "string"
                 }
             }

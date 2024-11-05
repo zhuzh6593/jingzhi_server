@@ -10,6 +10,7 @@ import (
 	"opencsg.com/csghub-server/api/httpbase"
 	"opencsg.com/csghub-server/common/config"
 	"opencsg.com/csghub-server/common/types"
+	"opencsg.com/csghub-server/common/utils/common"
 	apicomponent "opencsg.com/csghub-server/component"
 	"opencsg.com/csghub-server/user/component"
 )
@@ -121,6 +122,31 @@ func (h *UserHandler) Update(ctx *gin.Context) {
 	httpbase.OK(ctx, nil)
 }
 
+func (h *UserHandler) UpdateBalance(ctx *gin.Context) {
+	currentUser := httpbase.GetCurrentUser(ctx)
+	var req *types.UpdateBalanceRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		slog.Error("Bad request format", "error", err)
+		httpbase.BadRequest(ctx, err.Error())
+		return
+	}
+
+	userName := ctx.Param("username")
+	req.VisitorName = userName
+	req.CurrentUser = currentUser
+
+	_, err := h.c.AddBalance(ctx, req)
+
+	if err != nil {
+		slog.Error("Failed to update user", slog.Any("error", err))
+		httpbase.ServerError(ctx, err)
+		return
+	}
+
+	slog.Info("Update user succeed", slog.String("user", req.VisitorName))
+	httpbase.OK(ctx, nil)
+}
+
 // DeleteUser godoc
 // @Security     ApiKey
 // @Summary      Delete user
@@ -171,6 +197,41 @@ func (h *UserHandler) Get(ctx *gin.Context) {
 
 	slog.Info("Get user succeed", slog.String("userName", userName))
 	httpbase.OK(ctx, user)
+}
+
+// GetUsers godoc
+// @Security     ApiKey
+// @Summary      Get users info. Only Admin
+// @Tags         User
+// @Accept       json
+// @Produce      json
+// @Param        search  query  string true "search"
+// @Success      200  {object}  types.Response{data=[]types.User,total=int} "OK"
+// @Failure      400  {object}  types.APIBadRequest "Bad request"
+// @Failure      500  {object}  types.APIInternalServerError "Internal server error"
+// @Router       /users [get]
+func (h *UserHandler) Index(ctx *gin.Context) {
+	visitorName := httpbase.GetCurrentUser(ctx)
+	search := ctx.Query("search")
+	per, page, err := common.GetPerAndPageFromContext(ctx)
+	if err != nil {
+		slog.Error("Failed to get per and page", slog.Any("error", err))
+		httpbase.BadRequest(ctx, err.Error())
+		return
+	}
+	users, count, err := h.c.Index(ctx, visitorName, search, per, page)
+	if err != nil {
+		slog.Error("Failed to get user", slog.Any("error", err))
+		httpbase.ServerError(ctx, err)
+		return
+	}
+	respData := gin.H{
+		"data":  users,
+		"total": count,
+	}
+
+	slog.Info("Get users succeed")
+	httpbase.OK(ctx, respData)
 }
 
 func (h *UserHandler) Casdoor(ctx *gin.Context) {

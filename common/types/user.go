@@ -33,6 +33,8 @@ type UpdateUserRequest struct {
 
 	//if use want to change username, this should be the only field to send in request body
 	NewUserName *string `json:"new_username,omitempty"`
+	Bilibili    *string `json:"bilibili,omitempty"`
+	Weibo       *string `json:"weibo,omitempty"`
 }
 
 func (u *UpdateUserRequest) SensName() string {
@@ -143,7 +145,10 @@ type User struct {
 	Roles             []string       `json:"roles,omitempty"`
 	LastLoginAt       string         `json:"last_login_at,omitempty"`
 	Orgs              []Organization `json:"orgs,omitempty"`
-	CanChangeUserName bool           `json:"can_change_username"`
+	Bilibili          string         `json:"bilibili"`
+	Weibo             string         `json:"weibo"`
+	Balance           int            `json:"balance"`
+	CanChangeUserName bool           `json:"can_change_username,omitempty"`
 }
 
 type UserLikesRequest struct {
@@ -188,4 +193,10 @@ type UserRepoPermission struct {
 	CanRead  bool `json:"can_read"`
 	CanWrite bool `json:"can_write"`
 	CanAdmin bool `json:"can_admin"`
+}
+
+type UpdateBalanceRequest struct {
+	Balance     int    `json:"balance"`
+	VisitorName string `json:"-"`
+	CurrentUser string `json:"-"`
 }
