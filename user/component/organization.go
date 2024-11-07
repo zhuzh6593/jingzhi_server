@@ -221,6 +221,9 @@ func (c *OrganizationComponent) Update(ctx context.Context, req *types.EditOrgRe
 	if req.Industry != nil {
 		org.Industry = *req.Industry
 	}
+	if req.Description != nil {
+		org.Description = *req.Description
+	}
 	err = c.os.Update(ctx, &org)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update database organization, error: %w", err)
