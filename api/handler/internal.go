@@ -148,12 +148,6 @@ func (h *InternalHandler) PostReceive(ctx *gin.Context) {
 
 	ctx.PureJSON(http.StatusOK, gin.H{
 		"reference_counter_decreased": true,
-		"messages": []Messages{
-			{
-				Message: "Welcome to OpenCSG!",
-				Type:    "alert",
-			},
-		},
 	})
 }
 
