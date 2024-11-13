@@ -157,12 +157,14 @@ func (c *OrganizationComponent) Get(ctx context.Context, orgName string) (*types
 		return nil, fmt.Errorf("failed to get organizations by name, error: %w", err)
 	}
 	org := &types.Organization{
-		Name:     dborg.Name,
-		Nickname: dborg.Nickname,
-		Homepage: dborg.Homepage,
-		Logo:     dborg.Logo,
-		OrgType:  dborg.OrgType,
-		Verified: dborg.Verified,
+		Name:        dborg.Name,
+		Nickname:    dborg.Nickname,
+		Homepage:    dborg.Homepage,
+		Logo:        dborg.Logo,
+		OrgType:     dborg.OrgType,
+		Verified:    dborg.Verified,
+		Industry:    dborg.Industry,
+		Description: dborg.Description,
 	}
 	return org, nil
 }
