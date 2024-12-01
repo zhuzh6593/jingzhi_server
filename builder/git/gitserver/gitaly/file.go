@@ -8,6 +8,7 @@ import (
 	"io"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"gitlab.com/gitlab-org/gitaly/v16/proto/go/gitalypb"
@@ -32,6 +33,12 @@ func (c *Client) GetRepoFileRaw(ctx context.Context, req gitserver.GetRepoInfoBy
 	repository := &gitalypb.Repository{
 		StorageName:  c.config.GitalyServer.Storge,
 		RelativePath: BuildRelativePath(repoType, req.Namespace, req.Name),
+	}
+
+	req.Path = strings.TrimPrefix(req.Path, "/")
+
+	if req.Ref == "" {
+		req.Ref = "main"
 	}
 
 	treeEntriesReq := &gitalypb.TreeEntryRequest{
