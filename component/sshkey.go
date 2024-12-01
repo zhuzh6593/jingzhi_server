@@ -98,7 +98,7 @@ func (c *SSHKeyComponent) Delete(ctx context.Context, username, name string) err
 	if err != nil {
 		return fmt.Errorf("failed to delete git SSH keys,error:%w", err)
 	}
-	err = c.ss.Delete(ctx, sshKey.GitID)
+	err = c.ss.Delete(ctx, sshKey.ID)
 	if err != nil {
 		return fmt.Errorf("failed to delete database SSH keys,error:%w", err)
 	}

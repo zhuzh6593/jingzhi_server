@@ -70,12 +70,12 @@ func (s *SSHKeyStore) FindByFingerpringSHA256(ctx context.Context, fingerprint s
 	return &sshKey, err
 }
 
-func (s *SSHKeyStore) Delete(ctx context.Context, gid int64) (err error) {
+func (s *SSHKeyStore) Delete(ctx context.Context, id int64) (err error) {
 	var sshKey SSHKey
 	_, err = s.db.Operator.Core.
 		NewDelete().
 		Model(&sshKey).
-		Where("git_id = ?", gid).
+		Where("id = ?", id).
 		Exec(ctx)
 	return
 }
