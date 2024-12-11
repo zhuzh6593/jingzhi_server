@@ -13,6 +13,7 @@ COPY --from=build-env /go/bin/starhub .
 COPY scripts/init.sh /starhub-bin/scripts/
 COPY builder/store/database/seeds/. /starhub-bin/builder/store/database/seeds/
 RUN chmod +x /starhub-bin/scripts/init.sh
+RUN sed -i 's/\r$//' /starhub-bin/scripts/init.sh #For Windows
 
 EXPOSE 8080
 ENTRYPOINT ["/starhub-bin/scripts/init.sh"]

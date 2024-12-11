@@ -78,7 +78,7 @@ func newDeployer(s scheduler.Scheduler, ib imagebuilder.Builder, ir imagerunner.
 		rtfm:               database.NewRuntimeFrameworksStore(),
 	}
 
-	go d.refreshStatus()
+	//go d.refreshStatus()
 	go d.s.Run()
 	go d.startAccounting()
 

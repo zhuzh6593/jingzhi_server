@@ -306,17 +306,19 @@ func (c *RepoComponent) DeleteRepo(ctx context.Context, req types.DeleteRepoReq)
 		return nil, errors.New("user does not exist")
 	}
 
-	if namespace.NamespaceType == database.OrgNamespace {
-		canWrite, err := c.checkCurrentUserPermission(ctx, req.Username, req.Namespace, membership.RoleAdmin)
-		if err != nil {
-			return nil, err
-		}
-		if !canWrite {
-			return nil, errors.New("users do not have permission to delete repo in this organization")
-		}
-	} else {
-		if namespace.Path != user.Username {
-			return nil, errors.New("users do not have permission to delete repo in this namespace")
+	if !user.CanAdmin() {
+		if namespace.NamespaceType == database.OrgNamespace {
+			canWrite, err := c.checkCurrentUserPermission(ctx, req.Username, req.Namespace, membership.RoleAdmin)
+			if err != nil {
+				return nil, err
+			}
+			if !canWrite {
+				return nil, errors.New("users do not have permission to delete repo in this organization")
+			}
+		} else {
+			if namespace.Path != user.Username {
+				return nil, errors.New("users do not have permission to delete repo in this namespace")
+			}
 		}
 	}
 
