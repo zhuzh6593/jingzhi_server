@@ -73,7 +73,7 @@ type UpdateUserResp struct {
 type CreateUserTokenRequest struct {
 	Username  string `json:"-" `
 	TokenName string `json:"name"`
-	// default to csghub
+	// default to jingzhi
 	Application AccessTokenApp `json:"application,omitempty"`
 	// default to empty, means full permission
 	Permission string    `json:"permission,omitempty"`
@@ -184,7 +184,7 @@ type AccessTokenApp string
 
 const (
 	AccessTokenAppGit      AccessTokenApp = "git"
-	AccessTokenAppCSGHub                  = AccessTokenAppGit
+	AccessTokenAppJingzhi                 = AccessTokenAppGit
 	AccessTokenAppMirror   AccessTokenApp = "mirror"
 	AccessTokenAppStarship AccessTokenApp = "starship"
 )

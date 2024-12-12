@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"opencsg.com/csghub-server/api/httpbase"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
-	component "opencsg.com/csghub-server/component/callback"
+	"jingzhi-server/api/httpbase"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
+	component "jingzhi-server/component/callback"
 )
 
 type GitCallbackHandler struct {

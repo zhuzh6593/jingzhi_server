@@ -1,7 +1,7 @@
 package types
 
 const (
-	OpenCSGPrefix     = "CSG_"
+	JingzhiPrefix     = "CSG_"
 	HuggingfacePrefix = "HF_"
 )
 

@@ -3,9 +3,9 @@ package mirror
 import (
 	"context"
 
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/mirror/queue"
-	"opencsg.com/csghub-server/mirror/reposyncer"
+	"jingzhi-server/common/config"
+	"jingzhi-server/mirror/queue"
+	"jingzhi-server/mirror/reposyncer"
 )
 
 type RepoSyncWorker interface {

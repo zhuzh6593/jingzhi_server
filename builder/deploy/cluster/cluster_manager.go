@@ -9,6 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,9 +19,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 	knative "knative.dev/serving/pkg/client/clientset/versioned"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
 )
 
 // Cluster holds basic information about a Kubernetes cluster

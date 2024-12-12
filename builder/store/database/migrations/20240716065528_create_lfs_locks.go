@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/uptrace/bun"
-	"opencsg.com/csghub-server/builder/store/database"
+	"jingzhi-server/builder/store/database"
 )
 
 type LfsLock struct {
@@ -26,4 +26,3 @@ func init() {
 		return dropTables(ctx, db, LfsLock{})
 	})
 }
-

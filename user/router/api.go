@@ -6,10 +6,10 @@ import (
 	"log/slog"
 
 	"github.com/gin-gonic/gin"
-	"opencsg.com/csghub-server/api/httpbase"
-	"opencsg.com/csghub-server/api/middleware"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/user/handler"
+	"jingzhi-server/api/httpbase"
+	"jingzhi-server/api/middleware"
+	"jingzhi-server/common/config"
+	"jingzhi-server/user/handler"
 )
 
 func NewRouter(config *config.Config) (*gin.Engine, error) {

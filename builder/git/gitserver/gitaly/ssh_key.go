@@ -1,8 +1,8 @@
 package gitaly
 
 import (
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/types"
 )
 
 func (c *Client) CreateSSHKey(req *types.CreateSSHKeyRequest) (token *database.SSHKey, err error) {

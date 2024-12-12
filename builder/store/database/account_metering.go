@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"opencsg.com/csghub-server/common/types"
-	commonTypes "opencsg.com/csghub-server/common/types"
+	"jingzhi-server/common/types"
+	commonTypes "jingzhi-server/common/types"
 )
 
 type AccountMeteringStore struct {

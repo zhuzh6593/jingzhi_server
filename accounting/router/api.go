@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"opencsg.com/csghub-server/accounting/handler"
-	"opencsg.com/csghub-server/api/middleware"
-	"opencsg.com/csghub-server/common/config"
+	"jingzhi-server/accounting/handler"
+	"jingzhi-server/api/middleware"
+	"jingzhi-server/common/config"
 )
 
 func NewAccountRouter(config *config.Config) (*gin.Engine, error) {

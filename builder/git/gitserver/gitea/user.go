@@ -8,10 +8,10 @@ import (
 	"math/big"
 
 	"github.com/OpenCSGs/gitea-go-sdk/gitea"
-	"opencsg.com/csghub-server/builder/git/gitserver"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/common/utils/common"
+	"jingzhi-server/builder/git/gitserver"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/types"
+	"jingzhi-server/common/utils/common"
 )
 
 func (c *Client) CreateUser(u gitserver.CreateUserRequest) (user *gitserver.CreateUserResponse, err error) {

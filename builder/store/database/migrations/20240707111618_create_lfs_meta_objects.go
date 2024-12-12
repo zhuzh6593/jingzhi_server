@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/uptrace/bun"
-	"opencsg.com/csghub-server/builder/store/database"
+	"jingzhi-server/builder/store/database"
 )
 
 type LfsMetaObject struct {
@@ -24,4 +24,3 @@ func init() {
 		return dropTables(ctx, db, LfsMetaObject{})
 	})
 }
-

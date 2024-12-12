@@ -4,11 +4,11 @@ import (
 	"log/slog"
 
 	"github.com/gin-gonic/gin"
-	"opencsg.com/csghub-server/accounting/component"
-	"opencsg.com/csghub-server/accounting/utils"
-	"opencsg.com/csghub-server/api/httpbase"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/common/utils/common"
+	"jingzhi-server/accounting/component"
+	"jingzhi-server/accounting/utils"
+	"jingzhi-server/api/httpbase"
+	"jingzhi-server/common/types"
+	"jingzhi-server/common/utils/common"
 )
 
 func NewMeteringHandler() (*MeteringHandler, error) {

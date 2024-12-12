@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
 )
 
 type AccountingClient struct {

@@ -7,9 +7,9 @@ import (
 	"strconv"
 
 	"github.com/OpenCSGs/gitea-go-sdk/gitea"
-	"opencsg.com/csghub-server/builder/git/gitserver"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/common/utils/common"
+	"jingzhi-server/builder/git/gitserver"
+	"jingzhi-server/common/types"
+	"jingzhi-server/common/utils/common"
 )
 
 func (c *Client) GetRepoCommits(ctx context.Context, req gitserver.GetRepoCommitsReq) ([]types.Commit, *types.RepoPageOpts, error) {

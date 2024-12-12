@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/common/types"
 )
 
 type MirrorStore struct {
@@ -98,7 +98,7 @@ func (s *MirrorStore) FindByRepoPath(ctx context.Context, repoType types.Reposit
 func (s *MirrorStore) FindWithMapping(ctx context.Context, repoType types.RepositoryType, namespace, name string, mapping types.Mapping) (*Mirror, error) {
 	var mirror Mirror
 	var err error
-	if mapping == types.CSGHubMapping {
+	if mapping == types.JingzhiMapping {
 		return s.FindByRepoPath(ctx, repoType, namespace, name)
 	} else if mapping == types.HFMapping {
 		err = s.db.Operator.Core.NewSelect().

@@ -4,9 +4,9 @@ import (
 	"context"
 	"log/slog"
 
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
 )
 
 func NewListComponent(config *config.Config) (*ListComponent, error) {

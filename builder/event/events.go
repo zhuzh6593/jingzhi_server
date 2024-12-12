@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/mq"
+	"jingzhi-server/common/config"
+	"jingzhi-server/mq"
 )
 
 var (
-	CSGHubServerDurableConsumerName string = "NoBalanceConsumerForCSGHubServer"
-	DefaultEventPublisher           EventPublisher
+	JingzhiServerDurableConsumerName string = "NoBalanceConsumerForJingzhiServer"
+	DefaultEventPublisher            EventPublisher
 )
 
 type EventPublisher struct {

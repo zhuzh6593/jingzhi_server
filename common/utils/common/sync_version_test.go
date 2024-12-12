@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/types"
 )
 
 func TestAddPrefixBySourceID(t *testing.T) {
@@ -18,8 +18,8 @@ func TestAddPrefixBySourceID(t *testing.T) {
 		ChangeLog:      "test log",
 	}
 	str := AddPrefixBySourceID(s.SourceID, "test")
-	if str != "OpenCSG_test" {
-		t.Errorf("Expected str should be 'OpenCSG_test' but got %s", str)
+	if str != "Jingzhi_test" {
+		t.Errorf("Expected str should be 'Jingzhi_test' but got %s", str)
 	}
 
 	s1 := &database.SyncVersion{
@@ -46,14 +46,14 @@ func TestTrimPrefixCloneURLBySourceID(t *testing.T) {
 		ChangeLog:      "test log",
 	}
 	cloneURL := TrimPrefixCloneURLBySourceID(
-		"https://opencsg.com",
+		"https://jingzhi.com",
 		"model",
-		"OpenCSG_namespace",
+		"Jingzhi_namespace",
 		"name",
 		s.SourceID,
 	)
-	if cloneURL != "https://opencsg.com/models/namespace/name.git" {
-		t.Errorf("Expected cloneURL should be 'https://opencsg.com/models/namespace/name' but got %s", cloneURL)
+	if cloneURL != "https://jingzhi.com/models/namespace/name.git" {
+		t.Errorf("Expected cloneURL should be 'https://jingzhi.com/models/namespace/name' but got %s", cloneURL)
 	}
 
 	s1 := &database.SyncVersion{
@@ -65,13 +65,13 @@ func TestTrimPrefixCloneURLBySourceID(t *testing.T) {
 		ChangeLog:      "test log",
 	}
 	cloneURL1 := TrimPrefixCloneURLBySourceID(
-		"https://opencsg.com",
+		"https://jingzhi.com",
 		"model",
 		"Huggingface_namespace",
 		"name",
 		s1.SourceID,
 	)
-	if cloneURL1 != "https://opencsg.com/models/namespace/name.git" {
-		t.Errorf("Expected cloneURL should be 'https://opencsg.com/models/namespace/name' but got %s", cloneURL1)
+	if cloneURL1 != "https://jingzhi.com/models/namespace/name.git" {
+		t.Errorf("Expected cloneURL should be 'https://jingzhi.com/models/namespace/name' but got %s", cloneURL1)
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"gitlab.com/gitlab-org/gitaly/v16/proto/go/gitalypb"
-	"opencsg.com/csghub-server/builder/git/gitserver"
+	"jingzhi-server/builder/git/gitserver"
 )
 
 func (c *Client) CreateMirrorRepo(ctx context.Context, req gitserver.CreateMirrorRepoReq) (int64, error) {
@@ -45,7 +45,7 @@ func (c *Client) CreateMirrorRepo(ctx context.Context, req gitserver.CreateMirro
 		Mirror: true,
 	}
 	if req.MirrorToken != "" {
-		gitalyReq.HttpAuthorizationHeader = fmt.Sprintf("X-OPENCSG-Sync-Token%s", req.MirrorToken)
+		gitalyReq.HttpAuthorizationHeader = fmt.Sprintf("X-JINGZHI-Sync-Token%s", req.MirrorToken)
 	} else if authorHeader != "" {
 		gitalyReq.HttpAuthorizationHeader = authorHeader
 	} else {
@@ -77,7 +77,7 @@ func (c *Client) CreateMirrorForExistsRepo(ctx context.Context, req gitserver.Cr
 	}
 
 	if req.MirrorToken != "" {
-		fetchRemoteReq.RemoteParams.HttpAuthorizationHeader = fmt.Sprintf("X-OPENCSG-Sync-Token%s", req.MirrorToken)
+		fetchRemoteReq.RemoteParams.HttpAuthorizationHeader = fmt.Sprintf("X-JINGZHI-Sync-Token%s", req.MirrorToken)
 	} else if authorHeader != "" {
 		fetchRemoteReq.RemoteParams.HttpAuthorizationHeader = authorHeader
 	} else {
@@ -115,7 +115,7 @@ func (c *Client) MirrorSync(ctx context.Context, req gitserver.MirrorSyncReq) er
 	}
 
 	if req.MirrorToken != "" {
-		fetchRemoteReq.RemoteParams.HttpAuthorizationHeader = fmt.Sprintf("X-OPENCSG-Sync-Token%s", req.MirrorToken)
+		fetchRemoteReq.RemoteParams.HttpAuthorizationHeader = fmt.Sprintf("X-JINGZHI-Sync-Token%s", req.MirrorToken)
 	} else if authorHeader != "" {
 		fetchRemoteReq.RemoteParams.HttpAuthorizationHeader = authorHeader
 	} else {

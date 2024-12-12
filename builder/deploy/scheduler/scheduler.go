@@ -8,12 +8,12 @@ import (
 	"sync"
 	"time"
 
-	"opencsg.com/csghub-server/builder/deploy/imagebuilder"
-	"opencsg.com/csghub-server/builder/deploy/imagerunner"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/common/utils/common"
+	"jingzhi-server/builder/deploy/imagebuilder"
+	"jingzhi-server/builder/deploy/imagerunner"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
+	"jingzhi-server/common/utils/common"
 )
 
 type Scheduler interface {

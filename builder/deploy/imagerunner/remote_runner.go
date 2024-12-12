@@ -12,7 +12,7 @@ import (
 	"net/url"
 	"time"
 
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/common/types"
 )
 
 var _ Runner = (*RemoteRunner)(nil)

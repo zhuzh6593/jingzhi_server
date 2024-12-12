@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/types"
 )
 
 type SyncVersionGenerator struct {
@@ -27,7 +27,7 @@ func (g *SyncVersionGenerator) GenSyncVersion(req *types.GiteaCallbackPushReq) e
 	fullNamespace, repoName := splits[0], splits[1]
 	repoType, namespace, _ := strings.Cut(fullNamespace, "_")
 	_, err := g.s.Create(ctx, database.SyncVersion{
-		SourceID:       types.SyncVersionSourceOpenCSG,
+		SourceID:       types.SyncVersionSourceJingzhi,
 		RepoPath:       fmt.Sprintf("%s/%s", namespace, repoName),
 		RepoType:       types.RepositoryType(strings.TrimRight(repoType, "s")),
 		LastModifiedAt: req.HeadCommit.LastModifyTime,

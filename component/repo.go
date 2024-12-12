@@ -19,20 +19,20 @@ import (
 	"time"
 
 	"github.com/minio/minio-go/v7"
-	"opencsg.com/csghub-server/builder/deploy"
-	deployStatus "opencsg.com/csghub-server/builder/deploy/common"
-	"opencsg.com/csghub-server/builder/git"
-	"opencsg.com/csghub-server/builder/git/gitserver"
-	"opencsg.com/csghub-server/builder/git/membership"
-	"opencsg.com/csghub-server/builder/git/mirrorserver"
-	"opencsg.com/csghub-server/builder/rpc"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/builder/store/s3"
-	"opencsg.com/csghub-server/builder/userservice"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/common/utils/common"
-	"opencsg.com/csghub-server/mirror/queue"
+	"jingzhi-server/builder/deploy"
+	deployStatus "jingzhi-server/builder/deploy/common"
+	"jingzhi-server/builder/git"
+	"jingzhi-server/builder/git/gitserver"
+	"jingzhi-server/builder/git/membership"
+	"jingzhi-server/builder/git/mirrorserver"
+	"jingzhi-server/builder/rpc"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/builder/store/s3"
+	"jingzhi-server/builder/userservice"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
+	"jingzhi-server/common/utils/common"
+	"jingzhi-server/mirror/queue"
 )
 
 const (
@@ -1532,13 +1532,13 @@ func (c *RepoComponent) MirrorFromSaas(ctx context.Context, namespace, name, cur
 		return fmt.Errorf("failed to find sync version, error: %w", err)
 	}
 	mirrorSource := &database.MirrorSource{}
-	if syncVersion.SourceID == types.SyncVersionSourceOpenCSG {
-		mirrorSource.SourceName = types.OpenCSGPrefix
+	if syncVersion.SourceID == types.SyncVersionSourceJingzhi {
+		mirrorSource.SourceName = types.JingzhiPrefix
 	} else if syncVersion.SourceID == types.SyncVersionSourceHF {
 		mirrorSource.SourceName = types.HuggingfacePrefix
 	}
 
-	mirrorSource.SourceName = types.OpenCSGPrefix
+	mirrorSource.SourceName = types.JingzhiPrefix
 	syncClientSetting, err := c.syncClientSetting.First(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to find sync client setting, error: %w", err)

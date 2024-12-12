@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/common/types"
 )
 
 type repoTagWatcher struct {

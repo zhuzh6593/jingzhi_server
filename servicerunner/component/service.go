@@ -7,13 +7,13 @@ import (
 	"path"
 	"strconv"
 
+	"jingzhi-server/builder/deploy/cluster"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "knative.dev/serving/pkg/apis/serving/v1"
-	"opencsg.com/csghub-server/builder/deploy/cluster"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
 )
 
 var (

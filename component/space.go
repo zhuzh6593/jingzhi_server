@@ -9,13 +9,13 @@ import (
 	"strconv"
 	"strings"
 
-	"opencsg.com/csghub-server/builder/deploy"
-	"opencsg.com/csghub-server/builder/deploy/scheduler"
-	"opencsg.com/csghub-server/builder/git/gitserver"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/common/utils/common"
+	"jingzhi-server/builder/deploy"
+	"jingzhi-server/builder/deploy/scheduler"
+	"jingzhi-server/builder/git/gitserver"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
+	"jingzhi-server/common/utils/common"
 )
 
 const spaceGitattributesContent = modelGitattributesContent

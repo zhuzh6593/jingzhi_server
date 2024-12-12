@@ -6,10 +6,10 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"opencsg.com/csghub-server/api/httpbase"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/component"
+	"jingzhi-server/api/httpbase"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
+	"jingzhi-server/component"
 )
 
 func NewMirrorSourceHandler(config *config.Config) (*MirrorSourceHandler, error) {

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"opencsg.com/csghub-server/api/httpbase"
+	"jingzhi-server/api/httpbase"
 )
 
 func Log() gin.HandlerFunc {

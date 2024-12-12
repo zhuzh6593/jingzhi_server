@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"opencsg.com/csghub-server/common/config"
+	"jingzhi-server/common/config"
 )
 
 type AccountingClient struct {

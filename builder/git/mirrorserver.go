@@ -3,10 +3,10 @@ package git
 import (
 	"errors"
 
-	"opencsg.com/csghub-server/builder/git/mirrorserver"
-	"opencsg.com/csghub-server/builder/git/mirrorserver/gitea"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/builder/git/mirrorserver"
+	"jingzhi-server/builder/git/mirrorserver/gitea"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
 )
 
 func NewMirrorServer(config *config.Config) (mirrorserver.MirrorServer, error) {

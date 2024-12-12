@@ -9,7 +9,7 @@ import (
 	"slices"
 
 	"github.com/uptrace/bun"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/common/types"
 )
 
 type TagStore struct {

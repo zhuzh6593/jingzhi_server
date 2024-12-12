@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"opencsg.com/csghub-server/builder/git"
-	"opencsg.com/csghub-server/builder/git/gitserver"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/builder/git"
+	"jingzhi-server/builder/git/gitserver"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
 )
 
 func NewAccessTokenComponent(config *config.Config) (*AccessTokenComponent, error) {
@@ -50,7 +50,7 @@ func (c *AccessTokenComponent) Create(ctx context.Context, req *types.CreateUser
 	}
 
 	var token *database.AccessToken
-	// csghub token is shared with git server
+	// jingzhi token is shared with git server
 	if req.Application == types.AccessTokenAppGit {
 		token, err = c.gs.CreateUserToken(req)
 		if err != nil {
@@ -163,8 +163,8 @@ func (c *AccessTokenComponent) RefreshToken(ctx context.Context, userName, token
 		Application: t.Application,
 		Permission:  t.Permission,
 	}
-	// csghub token is shared with git server
-	if req.Application == "" || req.Application == types.AccessTokenAppCSGHub {
+	// jingzhi token is shared with git server
+	if req.Application == "" || req.Application == types.AccessTokenAppJingzhi {
 		// TODO:allow git client to refresh token
 		// git server cannot create tokens with the same nanme
 		err := c.gs.DeleteUserToken(&types.DeleteUserTokenRequest{

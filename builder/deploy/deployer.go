@@ -14,13 +14,13 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
-	"opencsg.com/csghub-server/builder/deploy/common"
-	"opencsg.com/csghub-server/builder/deploy/imagebuilder"
-	"opencsg.com/csghub-server/builder/deploy/imagerunner"
-	"opencsg.com/csghub-server/builder/deploy/scheduler"
-	"opencsg.com/csghub-server/builder/event"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/builder/deploy/common"
+	"jingzhi-server/builder/deploy/imagebuilder"
+	"jingzhi-server/builder/deploy/imagerunner"
+	"jingzhi-server/builder/deploy/scheduler"
+	"jingzhi-server/builder/event"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/types"
 )
 
 type Deployer interface {

@@ -19,7 +19,7 @@ const (
 	CodeRepo    RepositoryType = "code"
 	UnknownRepo RepositoryType = ""
 
-	OpenCSGSource     RepositorySource = "opencsg"
+	JingzhiSource     RepositorySource = "jingzhi"
 	LocalSource       RepositorySource = "local"
 	HuggingfaceSource RepositorySource = "huggingface"
 
@@ -74,7 +74,7 @@ type DeployRepo struct {
 	DeployID         int64      `json:"deploy_id,omitempty"`
 	DeployName       string     `json:"deploy_name,omitempty"`
 	SpaceID          int64      `json:"space_id,omitempty"`
-	Path             string     `json:"model_id,omitempty"` // csghub ask for model_id = namespace/name
+	Path             string     `json:"model_id,omitempty"` // jingzhi ask for model_id = namespace/name
 	Namespace        string     `json:"namespace,omitempty"`
 	Name             string     `json:"name,omitempty"`
 	Status           string     `json:"status"`

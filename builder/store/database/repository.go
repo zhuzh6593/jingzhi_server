@@ -10,12 +10,12 @@ import (
 	"time"
 
 	"github.com/uptrace/bun"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/common/types"
 )
 
 var RepositorySourceAndPrefixMapping = map[types.RepositorySource]string{
 	types.HuggingfaceSource: types.HuggingfacePrefix,
-	types.OpenCSGSource:     types.OpenCSGPrefix,
+	types.JingzhiSource:     types.JingzhiPrefix,
 	types.LocalSource:       "",
 }
 

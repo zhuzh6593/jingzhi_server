@@ -3,8 +3,8 @@ package component
 import (
 	"context"
 
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/types"
 )
 
 type EventComponent struct {

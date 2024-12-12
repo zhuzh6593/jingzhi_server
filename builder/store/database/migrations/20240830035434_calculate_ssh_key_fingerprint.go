@@ -6,7 +6,7 @@ import (
 
 	"github.com/uptrace/bun"
 	"golang.org/x/crypto/ssh"
-	"opencsg.com/csghub-server/builder/store/database"
+	"jingzhi-server/builder/store/database"
 )
 
 func init() {
@@ -46,4 +46,3 @@ func calculateSSHKeyFingerprint(ctx context.Context, db *bun.DB) error {
 
 	return err
 }
-

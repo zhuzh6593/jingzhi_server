@@ -29,7 +29,7 @@ func TestUniqueSpaceAppName(t *testing.T) {
 		t.Fatal("spaceID wrong")
 	}
 
-	host := "u-leida-test-20240327-leida-test-space-1.space-stg.opencsg.com"
+	host := "u-leida-test-20240327-leida-test-space-1.space-stg.jingzhi.com"
 	domainParts := strings.SplitN(host, ".", 2)
 	spaceAppName = domainParts[0]
 	spaceID, err = parseUniqueSpaceAppName(spaceAppName)

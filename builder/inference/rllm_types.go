@@ -8,7 +8,7 @@ type LlmModelInfo struct {
 type LlmModelInfo_Status struct {
 	/*example:
 	* {
-	*	"OpenCSG--opencsg-CodeLlama-7b-v0.1": "HEALTHY",
+	*	"Jingzhi--jingzhi-CodeLlama-7b-v0.1": "HEALTHY",
 	*	"RouterDeployment": "HEALTHY"
 	*	}
 	 */

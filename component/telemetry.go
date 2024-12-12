@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/common/types/telemetry"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/types"
+	"jingzhi-server/common/types/telemetry"
 )
 
 type TelemetryComponent struct {

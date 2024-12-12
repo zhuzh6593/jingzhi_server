@@ -12,11 +12,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang/gddo/httputil"
-	"opencsg.com/csghub-server/api/httpbase"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/component"
+	"jingzhi-server/api/httpbase"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
+	"jingzhi-server/component"
 )
 
 func NewGitHTTPHandler(config *config.Config) (*GitHTTPHandler, error) {
@@ -56,7 +56,7 @@ func (h *GitHTTPHandler) InfoRefs(ctx *gin.Context) {
 	reader, err := h.c.InfoRefs(ctx, req)
 	if err != nil {
 		if err == component.ErrUnauthorized {
-			ctx.Header("WWW-Authenticate", "Basic realm=opencsg-git")
+			ctx.Header("WWW-Authenticate", "Basic realm=jingzhi-git")
 			ctx.PureJSON(http.StatusUnauthorized, nil)
 			return
 		}
@@ -135,7 +135,7 @@ func (h *GitHTTPHandler) GitReceivePack(ctx *gin.Context) {
 	err := h.c.GitReceivePack(ctx, req)
 	if err != nil {
 		if err == component.ErrUnauthorized {
-			ctx.Header("WWW-Authenticate", "Basic realm=opencsg-git")
+			ctx.Header("WWW-Authenticate", "Basic realm=jingzhi-git")
 			ctx.PureJSON(http.StatusUnauthorized, nil)
 			return
 		}
@@ -178,7 +178,7 @@ func (h *GitHTTPHandler) LfsBatch(ctx *gin.Context) {
 	objectResponse, err := h.c.BuildObjectResponse(ctx, batchRequest, isUpload)
 	if err != nil {
 		if errors.Is(err, component.ErrUnauthorized) {
-			ctx.Header("WWW-Authenticate", "Basic realm=opencsg-git")
+			ctx.Header("WWW-Authenticate", "Basic realm=jingzhi-git")
 			ctx.PureJSON(http.StatusUnauthorized, nil)
 			return
 		}
@@ -305,7 +305,7 @@ func (h *GitHTTPHandler) ListLocks(ctx *gin.Context) {
 	res, err := h.c.ListLocks(ctx, req)
 	if err != nil {
 		if errors.Is(err, component.ErrUnauthorized) {
-			ctx.Header("WWW-Authenticate", "Basic realm=opencsg-git")
+			ctx.Header("WWW-Authenticate", "Basic realm=jingzhi-git")
 			ctx.PureJSON(http.StatusUnauthorized, types.LFSLockError{
 				Message: "You must have access to read locks",
 			})
@@ -352,7 +352,7 @@ func (h *GitHTTPHandler) CreateLock(ctx *gin.Context) {
 		}
 
 		if errors.Is(err, component.ErrUnauthorized) {
-			ctx.Header("WWW-Authenticate", "Basic realm=opencsg-git")
+			ctx.Header("WWW-Authenticate", "Basic realm=jingzhi-git")
 			ctx.PureJSON(http.StatusUnauthorized, types.LFSLockError{
 				Message: "You must have push access to create locks",
 			})
@@ -445,7 +445,7 @@ func (h *GitHTTPHandler) UnLock(ctx *gin.Context) {
 	lock, err = h.c.UnLock(ctx, req)
 	if err != nil {
 		if errors.Is(err, component.ErrUnauthorized) {
-			ctx.Header("WWW-Authenticate", "Basic realm=opencsg-git")
+			ctx.Header("WWW-Authenticate", "Basic realm=jingzhi-git")
 			ctx.PureJSON(http.StatusUnauthorized, types.LFSLockError{
 				Message: "You must have push access to create locks",
 			})

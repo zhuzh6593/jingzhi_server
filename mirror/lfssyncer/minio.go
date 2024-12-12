@@ -12,11 +12,11 @@ import (
 	"sync"
 
 	"github.com/minio/minio-go/v7"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/builder/store/s3"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/mirror/queue"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/builder/store/s3"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
+	"jingzhi-server/mirror/queue"
 )
 
 type MinioLFSSyncWorker struct {

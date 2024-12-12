@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"log/slog"
 
-	"opencsg.com/csghub-server/builder/deploy"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/builder/deploy"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
 )
 
 func NewSpaceResourceComponent(config *config.Config) (*SpaceResourceComponent, error) {

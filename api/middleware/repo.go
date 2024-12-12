@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/common/utils/common"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/types"
+	"jingzhi-server/common/utils/common"
 )
 
 func RepoType(t types.RepositoryType) gin.HandlerFunc {
@@ -26,7 +26,7 @@ func RepoMapping(repo_type types.RepositoryType) gin.HandlerFunc {
 		namespace := ctx.Param("namespace")
 		name := ctx.Param("name")
 		mapping := GetMapping(ctx)
-		if mapping == types.CSGHubMapping {
+		if mapping == types.JingzhiMapping {
 			ctx.Next()
 			return
 		}

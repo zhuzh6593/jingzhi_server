@@ -3,7 +3,7 @@ package database
 import (
 	"time"
 
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/common/types"
 )
 
 type Space struct {

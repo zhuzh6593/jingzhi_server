@@ -19,7 +19,7 @@ type SyncVersionData struct {
 
 type SyncVersion struct {
 	Version int64 `json:"version"`
-	//0: opencsg, 1: HF
+	//0: jingzhi, 1: HF
 	SourceID       int64          `json:"source_id"`
 	RepoPath       string         `json:"repo_path"`
 	RepoType       RepositoryType `json:"repo_type"`
@@ -38,7 +38,7 @@ type DatasetResponse struct {
 }
 
 const (
-	SyncVersionSourceOpenCSG = iota
+	SyncVersionSourceJingzhi = iota
 	SyncVersionSourceHF
 )
 

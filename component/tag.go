@@ -6,11 +6,11 @@ import (
 	"log/slog"
 	"slices"
 
-	"opencsg.com/csghub-server/builder/sensitive"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/component/tagparser"
+	"jingzhi-server/builder/sensitive"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
+	"jingzhi-server/component/tagparser"
 )
 
 func NewTagComponent(config *config.Config) (*TagComponent, error) {

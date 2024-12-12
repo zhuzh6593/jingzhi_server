@@ -6,14 +6,14 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"opencsg.com/csghub-server/api/httpbase"
-	"opencsg.com/csghub-server/builder/proxy"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/multisync/component"
-	"opencsg.com/csghub-server/multisync/types"
+	"jingzhi-server/api/httpbase"
+	"jingzhi-server/builder/proxy"
+	"jingzhi-server/common/config"
+	"jingzhi-server/multisync/component"
+	"jingzhi-server/multisync/types"
 )
 
-const MirrorTokenHeaderKey = "X-OPENCSG-Sync-Token"
+const MirrorTokenHeaderKey = "X-JINGZHI-Sync-Token"
 
 type MirrorProxyHandler struct {
 	gitServerURL string

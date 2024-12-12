@@ -7,7 +7,7 @@ import (
 
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
-	"opencsg.com/csghub-server/common/config"
+	"jingzhi-server/common/config"
 )
 
 var _ MessageQueue = (*NatsHandler)(nil)

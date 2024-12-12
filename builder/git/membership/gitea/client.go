@@ -12,8 +12,8 @@ import (
 	"net/http"
 
 	"github.com/OpenCSGs/gitea-go-sdk/gitea"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/config"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/config"
 )
 
 const (

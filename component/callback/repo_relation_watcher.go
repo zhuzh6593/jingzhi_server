@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"opencsg.com/csghub-server/builder/git/gitserver"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/component/tagparser"
+	"jingzhi-server/builder/git/gitserver"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/types"
+	"jingzhi-server/component/tagparser"
 )
 
 type repoRelationWatcher struct {

@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/OpenCSGs/gitea-go-sdk/gitea"
-	"opencsg.com/csghub-server/builder/git/gitserver"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/common/utils/common"
+	"jingzhi-server/builder/git/gitserver"
+	"jingzhi-server/common/types"
+	"jingzhi-server/common/utils/common"
 )
 
 func (c *Client) GetRepoTags(ctx context.Context, req gitserver.GetRepoTagsReq) (tags []*types.Tag, err error) {

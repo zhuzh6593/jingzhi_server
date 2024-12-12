@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/common/types"
 )
 
 type Client interface {
@@ -19,7 +19,7 @@ type Client interface {
 	FileList(ctx context.Context, v types.SyncVersion) ([]types.File, error)
 }
 
-func FromOpenCSG(endpoint string, accessToken string) Client {
+func FromJingzhi(endpoint string, accessToken string) Client {
 	return &commonClient{
 		endpoint:  endpoint,
 		hc:        http.DefaultClient,

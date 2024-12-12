@@ -3,8 +3,8 @@ package imagerunner
 import (
 	"context"
 
-	"opencsg.com/csghub-server/builder/deploy/common"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/builder/deploy/common"
+	"jingzhi-server/common/types"
 )
 
 var _ Runner = (*LocalRunner)(nil)

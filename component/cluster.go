@@ -3,9 +3,9 @@ package component
 import (
 	"context"
 
-	"opencsg.com/csghub-server/builder/deploy"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/builder/deploy"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
 )
 
 func NewClusterComponent(config *config.Config) (*ClusterComponent, error) {

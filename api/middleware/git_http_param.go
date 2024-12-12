@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"opencsg.com/csghub-server/api/httpbase"
-	"opencsg.com/csghub-server/builder/store/database"
+	"jingzhi-server/api/httpbase"
+	"jingzhi-server/builder/store/database"
 )
 
 const gitSuffix = ".git"
@@ -84,11 +84,11 @@ func GetCurrentUserFromHeader() gin.HandlerFunc {
 	userStore := database.NewUserStore()
 	return func(c *gin.Context) {
 		authHeader := c.Request.Header.Get("Authorization")
-		if authHeader != "" && !strings.HasPrefix(authHeader, "X-OPENCSG-Sync-Token") {
+		if authHeader != "" && !strings.HasPrefix(authHeader, "X-JINGZHI-Sync-Token") {
 			authHeader = strings.TrimPrefix(authHeader, "Basic ")
 			authInfo, err := base64.StdEncoding.DecodeString(authHeader)
 			if err != nil {
-				c.Header("WWW-Authenticate", "Basic realm=opencsg-git")
+				c.Header("WWW-Authenticate", "Basic realm=jingzhi-git")
 				c.PureJSON(http.StatusUnauthorized, nil)
 				c.Abort()
 				return
@@ -98,7 +98,7 @@ func GetCurrentUserFromHeader() gin.HandlerFunc {
 
 			user, err := userStore.FindByGitAccessToken(context.Background(), password)
 			if err != nil {
-				c.Header("WWW-Authenticate", "Basic realm=opencsg-git")
+				c.Header("WWW-Authenticate", "Basic realm=jingzhi-git")
 				c.PureJSON(http.StatusUnauthorized, nil)
 				c.Abort()
 				return

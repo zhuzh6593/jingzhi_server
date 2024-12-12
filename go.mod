@@ -1,4 +1,4 @@
-module opencsg.com/csghub-server
+module jingzhi-server
 
 go 1.22.0
 

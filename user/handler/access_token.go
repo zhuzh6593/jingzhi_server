@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"opencsg.com/csghub-server/api/httpbase"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
-	apicomponent "opencsg.com/csghub-server/component"
-	"opencsg.com/csghub-server/user/component"
+	"jingzhi-server/api/httpbase"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
+	apicomponent "jingzhi-server/component"
+	"jingzhi-server/user/component"
 )
 
 func NewAccessTokenHandler(config *config.Config) (*AccessTokenHandler, error) {

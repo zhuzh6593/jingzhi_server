@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/d5/tengo/v2"
-	"opencsg.com/csghub-server/builder/git"
-	"opencsg.com/csghub-server/builder/git/gitserver"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/config"
+	"jingzhi-server/builder/git"
+	"jingzhi-server/builder/git/gitserver"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/config"
 )
 
 type RecomComponent struct {

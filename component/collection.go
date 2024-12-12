@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"opencsg.com/csghub-server/builder/rpc"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/builder/rpc"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
 )
 
 func NewCollectionComponent(config *config.Config) (*CollectionComponent, error) {

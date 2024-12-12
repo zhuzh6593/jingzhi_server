@@ -3,9 +3,9 @@ package mirror
 import (
 	"context"
 
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/mirror/lfssyncer"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/config"
+	"jingzhi-server/mirror/lfssyncer"
 )
 
 type LFSSyncWorker interface {

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"log/slog"
 
-	"opencsg.com/csghub-server/builder/sensitive"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/builder/sensitive"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
 )
 
 type SensitiveChecker interface {

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"opencsg.com/csghub-server/builder/deploy/imagebuilder"
-	"opencsg.com/csghub-server/builder/deploy/imagerunner"
-	"opencsg.com/csghub-server/builder/deploy/scheduler"
+	"jingzhi-server/builder/deploy/imagebuilder"
+	"jingzhi-server/builder/deploy/imagerunner"
+	"jingzhi-server/builder/deploy/scheduler"
 )
 
 var (

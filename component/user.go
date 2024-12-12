@@ -8,12 +8,12 @@ import (
 	"log/slog"
 	"strings"
 
-	"opencsg.com/csghub-server/builder/deploy"
-	"opencsg.com/csghub-server/builder/git"
-	"opencsg.com/csghub-server/builder/git/gitserver"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/builder/deploy"
+	"jingzhi-server/builder/git"
+	"jingzhi-server/builder/git/gitserver"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
 )
 
 func NewUserComponent(config *config.Config) (*UserComponent, error) {

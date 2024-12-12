@@ -5,9 +5,9 @@ import (
 	"log/slog"
 
 	"github.com/OpenCSGs/gitea-go-sdk/gitea"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/common/utils/common"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/types"
+	"jingzhi-server/common/utils/common"
 )
 
 // FixOrganization recreate organization data, ignore data duplication error

@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"opencsg.com/csghub-server/api/middleware"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/servicerunner/handler"
+	"jingzhi-server/api/middleware"
+	"jingzhi-server/common/config"
+	"jingzhi-server/servicerunner/handler"
 )
 
 func NewHttpServer(config *config.Config) (*gin.Engine, error) {

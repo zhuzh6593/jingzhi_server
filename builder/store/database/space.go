@@ -6,7 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/uptrace/bun"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/common/types"
 )
 
 type SpaceStore struct {

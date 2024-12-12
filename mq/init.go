@@ -1,7 +1,7 @@
 package mq
 
 import (
-	"opencsg.com/csghub-server/common/config"
+	"jingzhi-server/common/config"
 )
 
 func Init(config *config.Config) (*NatsHandler, error) {

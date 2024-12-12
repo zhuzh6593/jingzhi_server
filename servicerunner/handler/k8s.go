@@ -12,16 +12,16 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"jingzhi-server/builder/deploy/cluster"
+	"jingzhi-server/builder/deploy/common"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
+	"jingzhi-server/servicerunner/component"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "knative.dev/serving/pkg/apis/serving/v1"
-	"opencsg.com/csghub-server/builder/deploy/cluster"
-	"opencsg.com/csghub-server/builder/deploy/common"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/servicerunner/component"
 )
 
 type K8sHander struct {

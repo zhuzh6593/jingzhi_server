@@ -11,7 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/ssh"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/common/types"
 )
 
 func GetNamespaceAndNameFromContext(ctx *gin.Context) (namespace string, name string, err error) {

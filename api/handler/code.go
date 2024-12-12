@@ -8,11 +8,11 @@ import (
 	"slices"
 
 	"github.com/gin-gonic/gin"
-	"opencsg.com/csghub-server/api/httpbase"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/common/utils/common"
-	"opencsg.com/csghub-server/component"
+	"jingzhi-server/api/httpbase"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
+	"jingzhi-server/common/utils/common"
+	"jingzhi-server/component"
 )
 
 func NewCodeHandler(config *config.Config) (*CodeHandler, error) {
@@ -92,7 +92,7 @@ func (h *CodeHandler) Create(ctx *gin.Context) {
 // @Param        license_tag query string false "filter by license tag"
 // @Param        language_tag query string false "filter by language tag"
 // @Param        sort query string false "sort by"
-// @Param        source query string false "source" Enums(opencsg, huggingface, local)
+// @Param        source query string false "source" Enums(jingzhi, huggingface, local)
 // @Param        per query int false "per" default(20)
 // @Param        page query int false "per page" default(1)
 // @Success      200  {object}  types.ResponseWithTotal{data=[]types.Code,total=int} "OK"

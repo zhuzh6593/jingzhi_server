@@ -8,8 +8,8 @@ import (
 	"net/http"
 
 	"github.com/OpenCSGs/gitea-go-sdk/gitea"
-	"opencsg.com/csghub-server/builder/git/membership"
-	"opencsg.com/csghub-server/common/utils/common"
+	"jingzhi-server/builder/git/membership"
+	"jingzhi-server/common/utils/common"
 )
 
 var _ membership.GitMemerShip = (*Client)(nil)

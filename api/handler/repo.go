@@ -16,11 +16,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"opencsg.com/csghub-server/api/httpbase"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/common/utils/common"
-	"opencsg.com/csghub-server/component"
+	"jingzhi-server/api/httpbase"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
+	"jingzhi-server/common/utils/common"
+	"jingzhi-server/component"
 )
 
 func NewRepoHandler(config *config.Config) (*RepoHandler, error) {
@@ -990,7 +990,7 @@ func (h *RepoHandler) CreateMirror(ctx *gin.Context) {
 
 // MirrorFromSaas godoc
 // @Security     ApiKey
-// @Summary      Mirror repo from OpenCSG Saas(only on-premises)
+// @Summary      Mirror repo from Jingzhi Saas(only on-premises)
 // @Tags         Repository
 // @Accept       json
 // @Produce      json
@@ -1014,7 +1014,7 @@ func (h *RepoHandler) MirrorFromSaas(ctx *gin.Context) {
 		return
 	}
 	repoType := common.RepoTypeFromContext(ctx)
-	if !strings.HasPrefix(namespace, types.OpenCSGPrefix) {
+	if !strings.HasPrefix(namespace, types.JingzhiPrefix) {
 		httpbase.BadRequest(ctx, "Repo could not be mirrored")
 		return
 	}

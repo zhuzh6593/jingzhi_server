@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/uptrace/bun"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/common/types"
 )
 
 type CollectionStore struct {

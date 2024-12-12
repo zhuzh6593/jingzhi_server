@@ -7,7 +7,7 @@ type Config struct {
 	InstanceID    string `envconfig:"STARHUB_SERVER_INSTANCE_ID"`
 	EnableSwagger bool   `envconfig:"STARHUB_SERVER_ENABLE_SWAGGER" default:"false"`
 	APIToken      string `envconfig:"STARHUB_SERVER_API_TOKEN" default:"0c11e6e4f2054444374ba3f0b70de4145935a7312289d404814cd5907c6aa93cc65cd35dbf94e04c13a3dedbf51f1694de84240c8acb7238b54a2c3ac8e87c59"`
-	// enable if you want to acess csghub through https, especially for space rproxy
+	// enable if you want to acess jingzhi through https, especially for space rproxy
 	EnableHTTPS bool `envconfig:"STARHUB_SERVER_ENABLE_HTTPS" default:"false"`
 
 	APIServer struct {
@@ -71,7 +71,7 @@ type Config struct {
 	}
 
 	Frontend struct {
-		URL string `envconfig:"STARHUB_SERVER_FRONTEND_URL" default:"https://opencsg.com"`
+		URL string `envconfig:"STARHUB_SERVER_FRONTEND_URL" default:"https://jingzhi.com"`
 	}
 
 	S3 struct {
@@ -80,7 +80,7 @@ type Config struct {
 		AccessKeySecret string `envconfig:"STARHUB_SERVER_S3_ACCESS_KEY_SECRET"`
 		Region          string `envconfig:"STARHUB_SERVER_S3_REGION"`
 		Endpoint        string `envconfig:"STARHUB_SERVER_S3_ENDPOINT" default:"oss-cn-beijing.aliyuncs.com"`
-		Bucket          string `envconfig:"STARHUB_SERVER_S3_BUCKET" default:"opencsg-test"`
+		Bucket          string `envconfig:"STARHUB_SERVER_S3_BUCKET" default:"jingzhi-test"`
 		EnableSSL       bool   `envconfig:"STARHUB_SERVER_S3_ENABLE_SSL" default:"false"`
 	}
 
@@ -112,8 +112,8 @@ type Config struct {
 		InternalRootDomain string `envconfig:"STARHUB_SERVER_INTERNAL_ROOT_DOMAIN" default:"internal.example.com"`
 		// the public root domain will be proxied from
 		PublicRootDomain string `envconfig:"STARHUB_SERVER_PUBLIC_ROOT_DOMAIN" default:"public.example.com"`
-		DockerRegBase    string `envconfig:"STARHUB_SERVER_DOCKER_REG_BASE" default:"registry.cn-beijing.aliyuncs.com/opencsg_public/"`
-		ImagePullSecret  string `envconfig:"STARHUB_SERVER_DOCKER_IMAGE_PULL_SECRET" default:"opencsg-pull-secret"`
+		DockerRegBase    string `envconfig:"STARHUB_SERVER_DOCKER_REG_BASE" default:"registry.cn-beijing.aliyuncs.com/jingzhi_public/"`
+		ImagePullSecret  string `envconfig:"STARHUB_SERVER_DOCKER_IMAGE_PULL_SECRET" default:"jingzhi-pull-secret"`
 		// reverse proxy listening port
 		RProxyServerPort int `envconfig:"STARHUB_SERVER_SPACE_RPROXY_SERVER_PORT" default:"8083"`
 		// secret key for session encryption
@@ -128,8 +128,8 @@ type Config struct {
 
 	Model struct {
 		DeployTimeoutInMin int    `envconfig:"STARHUB_SERVER_MODEL_DEPLOY_TIMEOUT_IN_MINUTES" default:"60"`
-		DownloadEndpoint   string `envconfig:"STARHUB_SERVER_MODEL_DOWNLOAD_ENDPOINT" default:"https://hub.opencsg.com"`
-		DockerRegBase      string `envconfig:"STARHUB_SERVER_MODEL_DOCKER_REG_BASE" default:"opencsg-registry.cn-beijing.cr.aliyuncs.com/public/"`
+		DownloadEndpoint   string `envconfig:"STARHUB_SERVER_MODEL_DOWNLOAD_ENDPOINT" default:"https://hub.jingzhi.com"`
+		DockerRegBase      string `envconfig:"STARHUB_SERVER_MODEL_DOCKER_REG_BASE" default:"jingzhi-registry.cn-beijing.cr.aliyuncs.com/public/"`
 	}
 	// send events
 	Event struct {
@@ -141,39 +141,39 @@ type Config struct {
 		ClientSecret     string `envconfig:"STARHUB_SERVER_CASDOOR_CLIENT_SECRET" default:"client_secret"`
 		Endpoint         string `envconfig:"STARHUB_SERVER_CASDOOR_ENDPOINT" default:"http://localhost:80"`
 		Certificate      string `envconfig:"STARHUB_SERVER_CASDOOR_CERTIFICATE" default:"/etc/casdoor/certificate.pem"`
-		OrganizationName string `envconfig:"STARHUB_SERVER_CASDOOR_ORGANIZATION_NAME" default:"opencsg"`
-		ApplicationName  string `envconfig:"STARHUB_SERVER_CASDOOR_APPLICATION_NAME" default:"opencsg"`
+		OrganizationName string `envconfig:"STARHUB_SERVER_CASDOOR_ORGANIZATION_NAME" default:"jingzhi"`
+		ApplicationName  string `envconfig:"STARHUB_SERVER_CASDOOR_APPLICATION_NAME" default:"jingzhi"`
 	}
 
 	Nats struct {
-		URL                      string `envconfig:"OPENCSG_ACCOUNTING_NATS_URL" default:"nats://account:g98dc5FA8v4J7ck90w@natsmaster:4222"`
-		MsgFetchTimeoutInSEC     int    `envconfig:"OPENCSG_ACCOUNTING_MSG_FETCH_TIMEOUTINSEC" default:"5"`
-		MeterRequestSubject      string `envconfig:"OPENCSG_ACCOUNTING_METER_EVENT_SUBJECT" default:"accounting.metering.>"`
+		URL                      string `envconfig:"JINGZHI_ACCOUNTING_NATS_URL" default:"nats://account:g98dc5FA8v4J7ck90w@natsmaster:4222"`
+		MsgFetchTimeoutInSEC     int    `envconfig:"JINGZHI_ACCOUNTING_MSG_FETCH_TIMEOUTINSEC" default:"5"`
+		MeterRequestSubject      string `envconfig:"JINGZHI_ACCOUNTING_METER_EVENT_SUBJECT" default:"accounting.metering.>"`
 		MeterDurationSendSubject string `envconfig:"STARHUB_SERVER_METER_DURATION_SEND_SUBJECT" default:"accounting.metering.duration"`
 		MeterTokenSendSubject    string `envconfig:"STARHUB_SERVER_METER_TOKEN_SEND_SUBJECT" default:"accounting.metering.token"`
 		MeterQuotaSendSubject    string `envconfig:"STARHUB_SERVER_METER_QUOTA_SEND_SUBJECT" default:"accounting.metering.quota"`
 	}
 
 	Accounting struct {
-		Host string `envconfig:"OPENCSG_ACCOUNTING_SERVER_HOST" default:"http://localhost"`
-		Port int    `envconfig:"OPENCSG_ACCOUNTING_SERVER_PORT" default:"8086"`
+		Host string `envconfig:"JINGZHI_ACCOUNTING_SERVER_HOST" default:"http://localhost"`
+		Port int    `envconfig:"JINGZHI_ACCOUNTING_SERVER_PORT" default:"8086"`
 	}
 
 	User struct {
-		Host                     string `envconfig:"OPENCSG_USER_SERVER_HOST" default:"http://localhost"`
-		Port                     int    `envconfig:"OPENCSG_USER_SERVER_PORT" default:"8088"`
-		SigninSuccessRedirectURL string `envconfig:"OPENCSG_USER_SERVER_SIGNIN_SUCCESS_REDIRECT_URL" default:"http://localhost:3000/server/callback"`
+		Host                     string `envconfig:"JINGZHI_USER_SERVER_HOST" default:"http://localhost"`
+		Port                     int    `envconfig:"JINGZHI_USER_SERVER_PORT" default:"8088"`
+		SigninSuccessRedirectURL string `envconfig:"JINGZHI_USER_SERVER_SIGNIN_SUCCESS_REDIRECT_URL" default:"http://localhost:3000/server/callback"`
 	}
 
 	MultiSync struct {
-		SaasAPIDomain  string `envconfig:"OPENCSG_SAAS_API_DOMAIN" default:"https://hub.opencsg.com"`
-		SaasSyncDomain string `envconfig:"OPENCSG_SAAS_SYNC_DOMAIN" default:"https://sync.opencsg.com"`
+		SaasAPIDomain  string `envconfig:"JINGZHI_SAAS_API_DOMAIN" default:"https://hub.jingzhi.com"`
+		SaasSyncDomain string `envconfig:"JINGZHI_SAAS_SYNC_DOMAIN" default:"https://sync.jingzhi.com"`
 		Enabled        bool   `envconfig:"STARHUB_SERVER_MULTI_SYNC_ENABLED" default:"false"`
 	}
 
 	Telemetry struct {
 		Enable    bool   `envconfig:"STARHUB_SERVER_TELEMETRY_ENABLE" default:"true"`
-		ReportURL string `envconfig:"STARHUB_SERVER_TELEMETRY_URL" default:"http://hub.opencsg.com/api/v1/telemetry"`
+		ReportURL string `envconfig:"STARHUB_SERVER_TELEMETRY_URL" default:"http://hub.jingzhi.com/api/v1/telemetry"`
 	}
 }
 

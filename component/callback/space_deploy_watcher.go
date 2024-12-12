@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/component"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/types"
+	"jingzhi-server/component"
 )
 
 type spaceDeployWatcher struct {

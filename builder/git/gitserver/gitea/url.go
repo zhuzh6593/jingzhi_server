@@ -1,7 +1,7 @@
 package gitea
 
 import (
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/common/types"
 )
 
 func repoPrefixByType(repoType types.RepositoryType) string {

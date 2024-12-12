@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/OpenCSGs/gitea-go-sdk/gitea"
-	"opencsg.com/csghub-server/builder/git/gitserver"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/common/utils/common"
+	"jingzhi-server/builder/git/gitserver"
+	"jingzhi-server/common/types"
+	"jingzhi-server/common/utils/common"
 )
 
 const (
@@ -188,15 +188,15 @@ func (c *Client) getFileContents(owner, repo, ref, path string) (*types.File, er
 	  "encoding": "base64",
 	  "content": "dmVyc2lvbiBodHRwczovL2dpdC1sZnMuZ2l0aHViLmNvbS9zcGVjL3YxCm9pZCBzaGEyNTY6ODYwMmQ0ZDNiMTRmNTg2NTIwZDFmNzY1MDkxZDlmM2E0ZmViMWM1Nzg2NDQ4YzYwMGQwMThkYjcyMTZmNzIzNQpzaXplIDQ5ODI0Njc4NjQK",
 	  "target": null,
-	  "url": "http://portal-stg.opencsg.com:3001/api/v1/repos/models_wayne/phi-2/contents/model-00001-of-00002.safetensors?ref=main",
-	  "html_url": "http://portal-stg.opencsg.com:3001/models_wayne/phi-2/src/branch/main/model-00001-of-00002.safetensors",
-	  "git_url": "http://portal-stg.opencsg.com:3001/api/v1/repos/models_wayne/phi-2/git/blobs/5824b5e840050f193d3d9091a6b5dbb3c33fb0f3",
-	  "download_url": "http://portal-stg.opencsg.com:3001/models_wayne/phi-2/raw/branch/main/model-00001-of-00002.safetensors",
+	  "url": "http://portal-stg.jingzhi.com:3001/api/v1/repos/models_wayne/phi-2/contents/model-00001-of-00002.safetensors?ref=main",
+	  "html_url": "http://portal-stg.jingzhi.com:3001/models_wayne/phi-2/src/branch/main/model-00001-of-00002.safetensors",
+	  "git_url": "http://portal-stg.jingzhi.com:3001/api/v1/repos/models_wayne/phi-2/git/blobs/5824b5e840050f193d3d9091a6b5dbb3c33fb0f3",
+	  "download_url": "http://portal-stg.jingzhi.com:3001/models_wayne/phi-2/raw/branch/main/model-00001-of-00002.safetensors",
 	  "submodule_git_url": null,
 	  "_links": {
-	    "self": "http://portal-stg.opencsg.com:3001/api/v1/repos/models_wayne/phi-2/contents/model-00001-of-00002.safetensors?ref=main",
-	    "git": "http://portal-stg.opencsg.com:3001/api/v1/repos/models_wayne/phi-2/git/blobs/5824b5e840050f193d3d9091a6b5dbb3c33fb0f3",
-	    "html": "http://portal-stg.opencsg.com:3001/models_wayne/phi-2/src/branch/main/model-00001-of-00002.safetensors"
+	    "self": "http://portal-stg.jingzhi.com:3001/api/v1/repos/models_wayne/phi-2/contents/model-00001-of-00002.safetensors?ref=main",
+	    "git": "http://portal-stg.jingzhi.com:3001/api/v1/repos/models_wayne/phi-2/git/blobs/5824b5e840050f193d3d9091a6b5dbb3c33fb0f3",
+	    "html": "http://portal-stg.jingzhi.com:3001/models_wayne/phi-2/src/branch/main/model-00001-of-00002.safetensors"
 	  }
 	}
 	*/

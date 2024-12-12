@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/common/types"
 )
 
 const (

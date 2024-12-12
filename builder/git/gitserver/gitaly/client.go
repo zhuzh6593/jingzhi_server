@@ -9,8 +9,8 @@ import (
 	gitalypb "gitlab.com/gitlab-org/gitaly/v16/proto/go/gitalypb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"opencsg.com/csghub-server/builder/git/gitserver"
-	"opencsg.com/csghub-server/common/config"
+	"jingzhi-server/builder/git/gitserver"
+	"jingzhi-server/common/config"
 )
 
 var _ gitserver.GitServer = (*Client)(nil)

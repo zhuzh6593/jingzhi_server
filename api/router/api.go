@@ -10,11 +10,11 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"opencsg.com/csghub-server/api/handler"
-	"opencsg.com/csghub-server/api/handler/callback"
-	"opencsg.com/csghub-server/api/middleware"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/api/handler"
+	"jingzhi-server/api/handler/callback"
+	"jingzhi-server/api/middleware"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
 )
 
 func NewRouter(config *config.Config, enableSwagger bool) (*gin.Engine, error) {

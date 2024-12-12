@@ -8,12 +8,12 @@ import (
 	"strconv"
 
 	pb "gitlab.com/gitlab-org/gitaly/v16/proto/go/gitalypb"
-	"opencsg.com/csghub-server/builder/git/gitserver"
-	"opencsg.com/csghub-server/builder/git/gitserver/gitaly"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/common/utils/common"
+	"jingzhi-server/builder/git/gitserver"
+	"jingzhi-server/builder/git/gitserver/gitaly"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
+	"jingzhi-server/common/utils/common"
 )
 
 type InternalComponent struct {
@@ -176,4 +176,3 @@ func (c *InternalComponent) LfsAuthenticate(ctx context.Context, req types.LfsAu
 		RepoPath: c.config.APIServer.PublicDomain + "/" + filepath.Join(repoType, req.Namespace, req.Name+".git"),
 	}, nil
 }
-

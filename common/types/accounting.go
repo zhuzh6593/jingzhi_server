@@ -19,7 +19,7 @@ type SKUType int
 
 var (
 	SKUReserve  SKUType = 0 // system reserve
-	SKUCSGHub   SKUType = 1 // csghub server
+	SKUJingzhi  SKUType = 1 // jingzhi server
 	SKUStarship SKUType = 2 // starship
 )
 
@@ -28,7 +28,7 @@ type SceneType int
 var (
 	SceneReserve        SceneType = 0  // system reserve
 	SceneModelInference SceneType = 10 // model inference endpoint
-	SceneSpace          SceneType = 11 // csghub space
+	SceneSpace          SceneType = 11 // jingzhi space
 	SceneModelFinetune  SceneType = 12 // model finetune
 	SceneMultiSync      SceneType = 13 // multi sync
 	SceneStarship       SceneType = 20 // starship

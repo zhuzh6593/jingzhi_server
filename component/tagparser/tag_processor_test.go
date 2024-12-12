@@ -5,7 +5,7 @@ import (
 	"slices"
 	"testing"
 
-	"opencsg.com/csghub-server/builder/store/database"
+	"jingzhi-server/builder/store/database"
 )
 
 type mockTagStore struct {

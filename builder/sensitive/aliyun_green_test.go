@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	"opencsg.com/csghub-server/common/config"
+	"jingzhi-server/common/config"
 )
 
 func Test_splitTasks(t *testing.T) {

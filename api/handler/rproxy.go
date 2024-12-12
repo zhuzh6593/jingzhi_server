@@ -8,10 +8,10 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"opencsg.com/csghub-server/api/httpbase"
-	"opencsg.com/csghub-server/builder/proxy"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/component"
+	"jingzhi-server/api/httpbase"
+	"jingzhi-server/builder/proxy"
+	"jingzhi-server/common/config"
+	"jingzhi-server/component"
 )
 
 type RProxyHandler struct {
@@ -101,7 +101,7 @@ func (r *RProxyHandler) GetSrvName(ctx *gin.Context) string {
 		parts := strings.SplitN(ctx.Request.URL.Path, "/", 5)
 		return parts[2]
 	} else {
-		// for case: https://dx1jpfny9hq8.cn-beijing.aliyun.space.opencsg.com
+		// for case: https://dx1jpfny9hq8.cn-beijing.aliyun.space.jingzhi.com
 		domainParts := strings.SplitN(host, ".", 2)
 		appSrvName := domainParts[0]
 		return appSrvName

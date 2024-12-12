@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/types"
 )
 
 type JwtComponent struct {
@@ -39,7 +39,7 @@ func (c *JwtComponent) GenerateToken(ctx context.Context, req types.CreateJWTReq
 		CurrentUser: u.Username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: expireAt,
-			Issuer:    "OpenCSG",
+			Issuer:    "Jingzhi",
 		},
 	}
 
@@ -58,7 +58,7 @@ func (c *JwtComponent) ParseToken(ctx context.Context, token string) (user *type
 		func(token *jwt.Token) (interface{}, error) {
 			return c.SigningKey, nil
 		},
-		jwt.WithIssuer("OpenCSG"),
+		jwt.WithIssuer("Jingzhi"),
 	)
 
 	if err != nil {

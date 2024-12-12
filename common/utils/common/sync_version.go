@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/common/types"
 )
 
 func AddPrefixBySourceID(sourceID int64, originString string) string {
@@ -18,8 +18,8 @@ func TrimPrefixCloneURLBySourceID(url, repoType, namespace, name string, sourceI
 
 func getprefixBySourceID(sourceID int64) string {
 	var prefix string
-	if sourceID == int64(types.SyncVersionSourceOpenCSG) {
-		prefix = types.OpenCSGPrefix
+	if sourceID == int64(types.SyncVersionSourceJingzhi) {
+		prefix = types.JingzhiPrefix
 	} else if sourceID == int64(types.SyncVersionSourceHF) {
 		prefix = types.HuggingfacePrefix
 	}

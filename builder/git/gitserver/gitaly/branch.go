@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 
 	"gitlab.com/gitlab-org/gitaly/v16/proto/go/gitalypb"
-	"opencsg.com/csghub-server/builder/git/gitserver"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/builder/git/gitserver"
+	"jingzhi-server/common/types"
 )
 
 func (c *Client) GetRepoBranches(ctx context.Context, req gitserver.GetBranchesReq) ([]types.Branch, error) {

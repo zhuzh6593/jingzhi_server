@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"opencsg.com/csghub-server/builder/store/database"
+	"jingzhi-server/builder/store/database"
 )
 
 type DatasetTagStore interface {

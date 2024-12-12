@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"opencsg.com/csghub-server/builder/git"
-	"opencsg.com/csghub-server/builder/git/gitserver"
-	"opencsg.com/csghub-server/builder/multisync"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/common/utils/common"
+	"jingzhi-server/builder/git"
+	"jingzhi-server/builder/git/gitserver"
+	"jingzhi-server/builder/multisync"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
+	"jingzhi-server/common/utils/common"
 )
 
 type MultiSyncComponent struct {
@@ -206,7 +206,7 @@ func (c *MultiSyncComponent) createLocalDataset(ctx context.Context, m *types.Da
 		// License:        req.License,
 		// DefaultBranch:  gitRepo.DefaultBranch,
 		RepositoryType: types.DatasetRepo,
-		Source:         types.OpenCSGSource,
+		Source:         types.JingzhiSource,
 		SyncStatus:     types.SyncStatusPending,
 		// HTTPCloneURL:   gitRepo.HttpCloneURL,
 		// SSHCloneURL:    gitRepo.SshCloneURL,
@@ -332,7 +332,7 @@ func (c *MultiSyncComponent) createLocalModel(ctx context.Context, m *types.Mode
 		// License:        req.License,
 		// DefaultBranch:  gitRepo.DefaultBranch,
 		RepositoryType: types.ModelRepo,
-		Source:         types.OpenCSGSource,
+		Source:         types.JingzhiSource,
 		SyncStatus:     types.SyncStatusPending,
 		// HTTPCloneURL:   gitRepo.HttpCloneURL,
 		// SSHCloneURL:    gitRepo.SshCloneURL,

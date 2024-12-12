@@ -10,7 +10,7 @@ import (
 	gitalyclient "gitlab.com/gitlab-org/gitaly/v16/client"
 	gitalypb "gitlab.com/gitlab-org/gitaly/v16/proto/go/gitalypb"
 	"gitlab.com/gitlab-org/gitaly/v16/streamio"
-	"opencsg.com/csghub-server/builder/git/gitserver"
+	"jingzhi-server/builder/git/gitserver"
 )
 
 var (

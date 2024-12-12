@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/uptrace/bun"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/common/types"
 )
 
 type AccessTokenStore struct {
@@ -28,7 +28,7 @@ type AccessToken struct {
 	Token  string `bun:",notnull" json:"token"`
 	UserID int64  `bun:",notnull" json:"user_id"`
 	User   *User  `bun:"rel:belongs-to,join:user_id=id" json:"user"`
-	//example: csghub, starship
+	//example: jingzhi, starship
 	Application types.AccessTokenApp `bun:"column:app," json:"application"`
 	Permission  string               `bun:"," json:"permission"`
 	IsActive    bool                 `bun:",default:true" json:"is_active"`

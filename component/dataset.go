@@ -7,11 +7,11 @@ import (
 	"log/slog"
 	"time"
 
-	"opencsg.com/csghub-server/builder/git/membership"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/common/utils/common"
+	"jingzhi-server/builder/git/membership"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
+	"jingzhi-server/common/utils/common"
 )
 
 const datasetGitattributesContent = `*.7z filter=lfs diff=lfs merge=lfs -text

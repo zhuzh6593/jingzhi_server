@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"opencsg.com/csghub-server/api/httpbase"
-	"opencsg.com/csghub-server/builder/git/membership"
+	"jingzhi-server/api/httpbase"
+	"jingzhi-server/builder/git/membership"
 )
 
 type UserSvcClient interface {

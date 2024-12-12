@@ -1,6 +1,6 @@
 package inference
 
-import "opencsg.com/csghub-server/common/config"
+import "jingzhi-server/common/config"
 
 func Init(config *config.Config) {
 }

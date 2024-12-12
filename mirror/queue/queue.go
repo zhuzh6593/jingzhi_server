@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"opencsg.com/csghub-server/builder/store/cache"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/builder/store/cache"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
 )
 
 type Priority int

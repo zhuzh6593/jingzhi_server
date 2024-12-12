@@ -6,9 +6,9 @@ import (
 	"log/slog"
 
 	"github.com/gin-gonic/gin"
-	"opencsg.com/csghub-server/api/httpbase"
-	"opencsg.com/csghub-server/common/types/telemetry"
-	"opencsg.com/csghub-server/component"
+	"jingzhi-server/api/httpbase"
+	"jingzhi-server/common/types/telemetry"
+	"jingzhi-server/component"
 )
 
 type TelemetryHandler struct {

@@ -5,7 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/gin-gonic/gin"
-	"opencsg.com/csghub-server/builder/proxy"
+	"jingzhi-server/builder/proxy"
 )
 
 type InternalServiceProxyHandler struct {

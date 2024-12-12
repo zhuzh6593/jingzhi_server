@@ -3,7 +3,7 @@ package imagerunner
 import (
 	"context"
 
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/common/types"
 )
 
 type Runner interface {

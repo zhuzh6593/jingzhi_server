@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"opencsg.com/csghub-server/api/httpbase"
-	"opencsg.com/csghub-server/builder/store/database"
+	"jingzhi-server/api/httpbase"
+	"jingzhi-server/builder/store/database"
 )
 
 func GetUserFromAccessToken() gin.HandlerFunc {

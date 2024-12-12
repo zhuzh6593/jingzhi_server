@@ -8,7 +8,7 @@ import (
 	"time"
 
 	gitalypb "gitlab.com/gitlab-org/gitaly/v16/proto/go/gitalypb"
-	"opencsg.com/csghub-server/builder/git/gitserver"
+	"jingzhi-server/builder/git/gitserver"
 )
 
 const timeoutTime = 10 * time.Second

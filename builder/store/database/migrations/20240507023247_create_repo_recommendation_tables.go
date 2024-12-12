@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/uptrace/bun"
-	"opencsg.com/csghub-server/builder/store/database"
+	"jingzhi-server/builder/store/database"
 )
 
 func init() {

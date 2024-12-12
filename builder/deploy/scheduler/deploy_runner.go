@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"opencsg.com/csghub-server/builder/deploy/common"
-	"opencsg.com/csghub-server/builder/deploy/imagerunner"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/builder/deploy/common"
+	"jingzhi-server/builder/deploy/imagerunner"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/types"
 )
 
 type DeployTimeout struct {
@@ -270,7 +270,7 @@ func (t *DeployRunner) makeDeployRequest() (*types.RunRequest, error) {
 	if deploy.Type == types.InferenceType || deploy.Type == types.ServerlessType {
 		// runtime framework port for model
 		envMap["port"] = strconv.Itoa(deploy.ContainerPort)
-		envMap["HF_ENDPOINT"] = t.modelDownloadEndpoint // "https://hub-stg.opencsg.com/"
+		envMap["HF_ENDPOINT"] = t.modelDownloadEndpoint // "https://hub-stg.jingzhi.com/"
 		envMap["HF_HUB_OFFLINE"] = "1"
 	}
 

@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"gitlab.com/gitlab-org/gitaly/v16/proto/go/gitalypb"
-	"opencsg.com/csghub-server/builder/git/gitserver"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/builder/git/gitserver"
+	"jingzhi-server/common/types"
 )
 
 const SHA1EmptyTreeID = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"

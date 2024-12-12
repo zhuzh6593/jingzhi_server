@@ -10,15 +10,15 @@ import (
 	"strings"
 
 	"github.com/minio/minio-go/v7"
-	"opencsg.com/csghub-server/builder/git"
-	"opencsg.com/csghub-server/builder/git/gitserver"
-	"opencsg.com/csghub-server/builder/git/mirrorserver"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/builder/store/s3"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
-	"opencsg.com/csghub-server/common/utils/common"
-	"opencsg.com/csghub-server/mirror/queue"
+	"jingzhi-server/builder/git"
+	"jingzhi-server/builder/git/gitserver"
+	"jingzhi-server/builder/git/mirrorserver"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/builder/store/s3"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
+	"jingzhi-server/common/utils/common"
+	"jingzhi-server/mirror/queue"
 )
 
 type MirrorComponent struct {
@@ -174,7 +174,7 @@ func (c *MirrorComponent) CreateMirrorRepo(ctx context.Context, req types.Create
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to create OpenCSG repo, error: %w", err)
+		return nil, fmt.Errorf("failed to create Jingzhi repo, error: %w", err)
 	}
 
 	if req.RepoType == types.ModelRepo {

@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"opencsg.com/csghub-server/builder/deploy/common"
-	"opencsg.com/csghub-server/builder/deploy/imagebuilder"
-	"opencsg.com/csghub-server/builder/store/database"
+	"jingzhi-server/builder/deploy/common"
+	"jingzhi-server/builder/deploy/imagebuilder"
+	"jingzhi-server/builder/store/database"
 )
 
 // BuilderRunner defines a docker image building task

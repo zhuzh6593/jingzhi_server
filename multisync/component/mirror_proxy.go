@@ -7,10 +7,10 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"opencsg.com/csghub-server/builder/store/database"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/multisync/accounting"
-	"opencsg.com/csghub-server/multisync/types"
+	"jingzhi-server/builder/store/database"
+	"jingzhi-server/common/config"
+	"jingzhi-server/multisync/accounting"
+	"jingzhi-server/multisync/types"
 )
 
 type MirrorProxyComponent struct {
@@ -72,6 +72,6 @@ func (c *MirrorProxyComponent) LfsDownload(ctx *gin.Context, token string) error
 		return fmt.Errorf("error getting sync quota: %v", err)
 	}
 
-	ctx.Request.Header.Add("X-OPENCSG-Speed-Limit", strconv.FormatInt(sq.SpeedLimit, 10))
+	ctx.Request.Header.Add("X-JINGZHI-Speed-Limit", strconv.FormatInt(sq.SpeedLimit, 10))
 	return nil
 }

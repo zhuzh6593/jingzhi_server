@@ -2,7 +2,7 @@ FROM opencsg-registry.cn-beijing.cr.aliyuncs.com/public/starhub-server:base-1.0 
 ENV GOPROXY=https://goproxy.cn,direct
 WORKDIR /starhub
 COPY . .
-RUN  CGO_ENABLED=1 GOOS=linux go build  -v -o /go/bin/starhub ./cmd/csghub-server && \
+RUN  CGO_ENABLED=1 GOOS=linux go build  -v -o /go/bin/starhub ./cmd/jingzhi-server && \
      rm -rf /go/pkg && \
      rm -rf /starhub
 

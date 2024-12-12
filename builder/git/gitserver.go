@@ -3,11 +3,11 @@ package git
 import (
 	"errors"
 
-	"opencsg.com/csghub-server/builder/git/gitserver"
-	"opencsg.com/csghub-server/builder/git/gitserver/gitaly"
-	"opencsg.com/csghub-server/builder/git/gitserver/gitea"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/types"
+	"jingzhi-server/builder/git/gitserver"
+	"jingzhi-server/builder/git/gitserver/gitaly"
+	"jingzhi-server/builder/git/gitserver/gitea"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/types"
 )
 
 func NewGitServer(config *config.Config) (gitserver.GitServer, error) {

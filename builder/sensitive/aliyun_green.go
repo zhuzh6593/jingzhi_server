@@ -14,8 +14,8 @@ import (
 	green20220302 "github.com/alibabacloud-go/green-20220302/client"
 	"github.com/alibabacloud-go/tea/tea"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/green"
-	"opencsg.com/csghub-server/common/config"
-	"opencsg.com/csghub-server/common/utils/common"
+	"jingzhi-server/common/config"
+	"jingzhi-server/common/utils/common"
 )
 
 /*

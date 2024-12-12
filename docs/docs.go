@@ -262,7 +262,7 @@ const docTemplate = `{
                     },
                     {
                         "enum": [
-                            "opencsg",
+                            "jingzhi",
                             "huggingface",
                             "local"
                         ],
@@ -1316,7 +1316,7 @@ const docTemplate = `{
                     },
                     {
                         "enum": [
-                            "opencsg",
+                            "jingzhi",
                             "huggingface",
                             "local"
                         ],
@@ -3071,7 +3071,7 @@ const docTemplate = `{
                     },
                     {
                         "enum": [
-                            "opencsg",
+                            "jingzhi",
                             "huggingface",
                             "local"
                         ],
@@ -7212,7 +7212,7 @@ const docTemplate = `{
                     },
                     {
                         "enum": [
-                            "opencsg",
+                            "jingzhi",
                             "huggingface",
                             "local"
                         ],
@@ -11428,7 +11428,7 @@ const docTemplate = `{
                 "tags": [
                     "Repository"
                 ],
-                "summary": "Mirror repo from OpenCSG Saas(only on-premises)",
+                "summary": "Mirror repo from Jingzhi Saas(only on-premises)",
                 "parameters": [
                     {
                         "enum": [
@@ -13083,7 +13083,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "application": {
-                    "description": "example: csghub, starship",
+                    "description": "example: jingzhi, starship",
                     "allOf": [
                         {
                             "$ref": "#/definitions/types.AccessTokenApp"
@@ -13942,7 +13942,7 @@ const docTemplate = `{
             ],
             "x-enum-varnames": [
                 "AccessTokenAppGit",
-                "AccessTokenAppCSGHub",
+                "AccessTokenAppJingzhi",
                 "AccessTokenAppMirror",
                 "AccessTokenAppStarship"
             ]
@@ -14705,7 +14705,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "application": {
-                    "description": "default to csghub",
+                    "description": "default to jingzhi",
                     "allOf": [
                         {
                             "$ref": "#/definitions/types.AccessTokenApp"
@@ -14840,7 +14840,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "application": {
-                    "description": "default to csghub",
+                    "description": "default to jingzhi",
                     "allOf": [
                         {
                             "$ref": "#/definitions/types.AccessTokenApp"
@@ -15490,12 +15490,12 @@ const docTemplate = `{
         "types.RepositorySource": {
             "type": "string",
             "enum": [
-                "opencsg",
+                "jingzhi",
                 "local",
                 "huggingface"
             ],
             "x-enum-varnames": [
-                "OpenCSGSource",
+                "JingzhiSource",
                 "LocalSource",
                 "HuggingfaceSource"
             ]
@@ -15796,7 +15796,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/types.RepositoryType"
                 },
                 "source_id": {
-                    "description": "0: opencsg, 1: HF",
+                    "description": "0: jingzhi, 1: HF",
                     "type": "integer"
                 },
                 "version": {
