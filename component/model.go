@@ -16,6 +16,7 @@ import (
 	"jingzhi-server/common/config"
 	"jingzhi-server/common/types"
 	"jingzhi-server/common/utils/common"
+	"jingzhi-server/common/utils/convert"
 )
 
 const modelGitattributesContent = `*.7z filter=lfs diff=lfs merge=lfs -text
@@ -113,7 +114,6 @@ func (c *ModelComponent) Index(ctx context.Context, filter *types.RepoFilter, pe
 		return nil, 0, newError
 	}
 
-	// loop through repos to keep the repos in sort order
 	for _, repo := range repos {
 		var model *database.Model
 		for _, m := range models {
@@ -137,23 +137,25 @@ func (c *ModelComponent) Index(ctx context.Context, filter *types.RepoFilter, pe
 				UpdatedAt: tag.UpdatedAt,
 			})
 		}
+
 		resModels = append(resModels, types.Model{
-			ID:           model.ID,
-			Name:         repo.Name,
-			Nickname:     repo.Nickname,
-			Description:  repo.Description,
-			Likes:        repo.Likes,
-			Downloads:    repo.DownloadCount,
-			Path:         repo.Path,
-			RepositoryID: repo.ID,
-			Private:      repo.Private,
-			CreatedAt:    model.CreatedAt,
-			Tags:         tags,
-			UpdatedAt:    repo.UpdatedAt,
-			Source:       repo.Source,
-			SyncStatus:   repo.SyncStatus,
-			License:      repo.License,
-			Repository:   common.BuildCloneInfo(c.config, model.Repository),
+			ID:              model.ID,
+			Name:            repo.Name,
+			Nickname:        repo.Nickname,
+			Description:     repo.Description,
+			Likes:           repo.Likes,
+			Downloads:       repo.DownloadCount,
+			Path:            repo.Path,
+			RepositoryID:    repo.ID,
+			Private:         repo.Private,
+			CreatedAt:       model.CreatedAt,
+			Tags:            tags,
+			UpdatedAt:       repo.UpdatedAt,
+			Source:          repo.Source,
+			SyncStatus:      repo.SyncStatus,
+			License:         repo.License,
+			Repository:      common.BuildCloneInfo(c.config, model.Repository),
+			ExternalSources: convert.ToExternalSources(repo.ExternalSources),
 		})
 	}
 	return resModels, total, nil
@@ -267,11 +269,12 @@ func (c *ModelComponent) Create(ctx context.Context, req *types.CreateModelReq) 
 			Nickname: user.NickName,
 			Email:    user.Email,
 		},
-		Tags:      tags,
-		CreatedAt: model.CreatedAt,
-		UpdatedAt: model.UpdatedAt,
-		BaseModel: model.BaseModel,
-		License:   model.Repository.License,
+		Tags:            tags,
+		CreatedAt:       model.CreatedAt,
+		UpdatedAt:       model.UpdatedAt,
+		BaseModel:       model.BaseModel,
+		License:         model.Repository.License,
+		ExternalSources: convert.ToExternalSources(model.Repository.ExternalSources),
 	}
 
 	return resModel, nil
@@ -312,18 +315,19 @@ func (c *ModelComponent) Update(ctx context.Context, req *types.UpdateModelReq) 
 		return nil, fmt.Errorf("failed to update database model, error: %w", err)
 	}
 	resModel := &types.Model{
-		ID:           model.ID,
-		Name:         dbRepo.Name,
-		Nickname:     dbRepo.Nickname,
-		Description:  dbRepo.Description,
-		Likes:        dbRepo.Likes,
-		Downloads:    dbRepo.DownloadCount,
-		Path:         dbRepo.Path,
-		RepositoryID: dbRepo.ID,
-		Private:      dbRepo.Private,
-		CreatedAt:    model.CreatedAt,
-		UpdatedAt:    model.UpdatedAt,
-		BaseModel:    model.BaseModel,
+		ID:              model.ID,
+		Name:            dbRepo.Name,
+		Nickname:        dbRepo.Nickname,
+		Description:     dbRepo.Description,
+		Likes:           dbRepo.Likes,
+		Downloads:       dbRepo.DownloadCount,
+		Path:            dbRepo.Path,
+		RepositoryID:    dbRepo.ID,
+		Private:         dbRepo.Private,
+		CreatedAt:       model.CreatedAt,
+		UpdatedAt:       model.UpdatedAt,
+		BaseModel:       model.BaseModel,
+		ExternalSources: convert.ToExternalSources(dbRepo.ExternalSources),
 	}
 
 	return resModel, nil
@@ -419,9 +423,10 @@ func (c *ModelComponent) Show(ctx context.Context, namespace, name, currentUser 
 		BaseModel:  model.BaseModel,
 		License:    model.Repository.License,
 
-		CanWrite:  permission.CanWrite,
-		CanManage: permission.CanAdmin,
-		Namespace: ns,
+		CanWrite:        permission.CanWrite,
+		CanManage:       permission.CanAdmin,
+		Namespace:       ns,
+		ExternalSources: convert.ToExternalSources(model.Repository.ExternalSources),
 	}
 	inferences, _ := c.rrtfms.GetByRepoIDsAndType(ctx, model.Repository.ID, types.InferenceType)
 	if len(inferences) > 0 {

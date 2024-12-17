@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/uptrace/bun"
 	"jingzhi-server/common/types"
+
+	"github.com/uptrace/bun"
 )
 
 type SpaceStore struct {
@@ -56,6 +57,7 @@ func (s *SpaceStore) FindByPath(ctx context.Context, namespace, name string) (*S
 		NewSelect().
 		Model(resSpace).
 		Relation("Repository.User").
+		Relation("Repository.ExternalSources").
 		Where("repository.path = ? and repository.repository_type = ?", fmt.Sprintf("%s/%s", namespace, name), types.SpaceRepo).
 		Scan(ctx)
 	if err != nil {
@@ -75,7 +77,11 @@ func (s *SpaceStore) Delete(ctx context.Context, input Space) error {
 
 func (s *SpaceStore) ByID(ctx context.Context, id int64) (*Space, error) {
 	var space Space
-	err := s.db.Core.NewSelect().Model(&space).Relation("Repository").Where("space.id = ?", id).Scan(ctx)
+	err := s.db.Core.NewSelect().Model(&space).
+		Relation("Repository").
+		Relation("Repository.ExternalSources").
+		Where("space.id = ?", id).
+		Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -154,6 +160,7 @@ func (s *SpaceStore) ByOrgPath(ctx context.Context, namespace string, per, page 
 		Model(&spaces).
 		Relation("Repository.Tags").
 		Relation("Repository.User").
+		Relation("Repository.ExternalSources").
 		Where("repository.path like ?", fmt.Sprintf("%s/%%", namespace))
 
 	if onlyPublic {
@@ -180,6 +187,7 @@ func (s *SpaceStore) ListByPath(ctx context.Context, paths []string) ([]Space, e
 		NewSelect().
 		Model(&Space{}).
 		Relation("Repository").
+		Relation("Repository.ExternalSources").
 		Where("path IN (?)", bun.In(paths)).
 		Scan(ctx, &spaces)
 	if err != nil {

@@ -6,8 +6,9 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/uptrace/bun"
 	"jingzhi-server/common/types"
+
+	"github.com/uptrace/bun"
 )
 
 type ModelStore struct {
@@ -33,6 +34,7 @@ func (s *ModelStore) ByRepoIDs(ctx context.Context, repoIDs []int64) (models []M
 	err = s.db.Operator.Core.NewSelect().
 		Model(&models).
 		Relation("Repository").
+		Relation("Repository.ExternalSources").
 		Where("repository_id in (?)", bun.In(repoIDs)).
 		Scan(ctx)
 
@@ -43,6 +45,8 @@ func (s *ModelStore) ByRepoID(ctx context.Context, repoID int64) (*Model, error)
 	var m Model
 	err := s.db.Core.NewSelect().
 		Model(&m).
+		Relation("Repository").
+		Relation("Repository.ExternalSources").
 		Where("repository_id = ?", repoID).
 		Scan(ctx)
 	if err != nil {
@@ -58,6 +62,7 @@ func (s *ModelStore) ByUsername(ctx context.Context, username string, per, page 
 		Model(&models).
 		Relation("Repository.Tags").
 		Relation("Repository.User").
+		Relation("Repository.ExternalSources").
 		Where("repository.path like ?", fmt.Sprintf("%s/%%", username))
 
 	if onlyPublic {
@@ -84,6 +89,7 @@ func (s *ModelStore) UserLikesModels(ctx context.Context, userID int64, per, pag
 		Model(&models).
 		Relation("Repository.Tags").
 		Relation("Repository.User").
+		Relation("Repository.ExternalSources").
 		Where("repository.id in (select repo_id from user_likes where user_id=?)", userID)
 
 	query = query.Order("model.created_at DESC").
@@ -107,6 +113,7 @@ func (s *ModelStore) ByOrgPath(ctx context.Context, namespace string, per, page 
 		Model(&models).
 		Relation("Repository.Tags").
 		Relation("Repository.User").
+		Relation("Repository.ExternalSources").
 		Where("repository.path like ?", fmt.Sprintf("%s/%%", namespace))
 
 	if onlyPublic {
@@ -174,6 +181,7 @@ func (s *ModelStore) FindByPath(ctx context.Context, namespace string, name stri
 		NewSelect().
 		Model(resModel).
 		Relation("Repository.User").
+		Relation("Repository.ExternalSources").
 		Where("repository.path =?", fmt.Sprintf("%s/%s", namespace, name)).
 		Limit(1).
 		Scan(ctx)
@@ -204,6 +212,7 @@ func (s *ModelStore) ListByPath(ctx context.Context, paths []string) ([]Model, e
 		NewSelect().
 		Model(&Model{}).
 		Relation("Repository").
+		Relation("Repository.ExternalSources").
 		Where("repository.path IN (?)", bun.In(paths)).
 		Scan(ctx, &models)
 	if err != nil {
@@ -224,7 +233,11 @@ func (s *ModelStore) ListByPath(ctx context.Context, paths []string) ([]Model, e
 
 func (s *ModelStore) ByID(ctx context.Context, id int64) (*Model, error) {
 	var model Model
-	err := s.db.Core.NewSelect().Model(&model).Relation("Repository").Where("model.id = ?", id).Scan(ctx)
+	err := s.db.Core.NewSelect().Model(&model).
+		Relation("Repository").
+		Relation("Repository.ExternalSources").
+		Where("model.id = ?", id).
+		Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -236,6 +249,7 @@ func (s *ModelStore) CreateIfNotExist(ctx context.Context, input Model) (*Model,
 		Model(&input).
 		Where("repository_id = ?", input.RepositoryID).
 		Relation("Repository").
+		Relation("Repository.ExternalSources").
 		Scan(ctx)
 	if err == nil {
 		return &input, nil

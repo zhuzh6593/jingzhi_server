@@ -19,13 +19,14 @@ type UpdateModelReq struct {
 }
 
 type UpdateRepoReq struct {
-	Username    string         `json:"-"`
-	Namespace   string         `json:"-"`
-	Name        string         `json:"-"`
-	RepoType    RepositoryType `json:"-"`
-	Nickname    *string        `json:"nickname" example:"model display name"`
-	Description *string        `json:"description"`
-	Private     *bool          `json:"private" example:"false"`
+	Username        string           `json:"-"`
+	Namespace       string           `json:"-"`
+	Name            string           `json:"-"`
+	RepoType        RepositoryType   `json:"-"`
+	Nickname        *string          `json:"nickname" example:"model display name"`
+	Description     *string          `json:"description"`
+	Private         *bool            `json:"private" example:"false"`
+	ExternalSources []ExternalSource `json:"external_sources,omitempty"`
 }
 
 // make sure UpdateModelReq implements SensitiveRequest interface
@@ -77,17 +78,18 @@ type ModelPredictResp struct {
 }
 
 type CreateRepoReq struct {
-	Username      string         `json:"-" example:"creator_user_name"`
-	Namespace     string         `json:"namespace" example:"user_or_org_name"`
-	Name          string         `json:"name" example:"model_name_1"`
-	Nickname      string         `json:"nickname" example:"model display name"`
-	Description   string         `json:"description"`
-	Private       bool           `json:"private"`
-	Labels        string         `json:"labels" example:""`
-	License       string         `json:"license" example:"MIT"`
-	Readme        string         `json:"readme"`
-	DefaultBranch string         `json:"default_branch" example:"main"`
-	RepoType      RepositoryType `json:"-"`
+	Username        string           `json:"-" example:"creator_user_name"`
+	Namespace       string           `json:"namespace" example:"user_or_org_name"`
+	Name            string           `json:"name" example:"model_name_1"`
+	Nickname        string           `json:"nickname" example:"model display name"`
+	Description     string           `json:"description"`
+	Private         bool             `json:"private"`
+	Labels          string           `json:"labels" example:""`
+	License         string           `json:"license" example:"MIT"`
+	Readme          string           `json:"readme"`
+	DefaultBranch   string           `json:"default_branch" example:"main"`
+	RepoType        RepositoryType   `json:"-"`
+	ExternalSources []ExternalSource `json:"external_sources,omitempty"`
 }
 
 // make sure CreateRepoReq implements SensitiveRequest
@@ -152,6 +154,7 @@ type Model struct {
 	CanWrite        bool                 `json:"can_write"`
 	CanManage       bool                 `json:"can_manage"`
 	Namespace       *Namespace           `json:"namespace"`
+	ExternalSources []ExternalSource     `json:"external_sources,omitempty"`
 }
 
 type SDKModelInfo struct {
@@ -287,4 +290,9 @@ type DeployUpdateReq struct {
 	MaxReplica         *int    `json:"max_replica" validate:"min=1,gtefield=MinReplica"`
 	Revision           *string `json:"revision"`
 	SecureLevel        *int    `json:"secure_level"`
+}
+
+type ExternalSource struct {
+	SourceName string `json:"source_name" example:"huggingface"`
+	SourceURL  string `json:"source_url" example:"https://huggingface.co/username/model_name"`
 }
