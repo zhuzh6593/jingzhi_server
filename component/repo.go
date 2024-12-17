@@ -18,7 +18,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/minio/minio-go/v7"
 	"jingzhi-server/builder/deploy"
 	deployStatus "jingzhi-server/builder/deploy/common"
 	"jingzhi-server/builder/git"
@@ -33,6 +32,8 @@ import (
 	"jingzhi-server/common/types"
 	"jingzhi-server/common/utils/common"
 	"jingzhi-server/mirror/queue"
+
+	"github.com/minio/minio-go/v7"
 )
 
 const (
@@ -215,11 +216,26 @@ func (c *RepoComponent) CreateRepo(ctx context.Context, req types.CreateRepoReq)
 		HTTPCloneURL:   gitRepo.HttpCloneURL,
 		SSHCloneURL:    gitRepo.SshCloneURL,
 	}
+
 	newDBRepo, err := c.repo.CreateRepo(ctx, dbRepo)
 	if err != nil {
 		return nil, nil, fmt.Errorf("fail to create database repo, error: %w", err)
 	}
 	newDBRepo.User = user
+
+	if len(req.ExternalSources) > 0 {
+		for _, source := range req.ExternalSources {
+			_, err = c.repo.CreateExternalSource(ctx, database.RepositoryExternalSource{
+				RepositoryID: newDBRepo.ID,
+				Repository:   newDBRepo,
+				SourceName:   source.SourceName,
+				SourceURL:    source.SourceURL,
+			})
+			if err != nil {
+				return nil, nil, fmt.Errorf("failed to create external source: %w", err)
+			}
+		}
+	}
 
 	return gitRepo, newDBRepo, nil
 }
@@ -264,6 +280,22 @@ func (c *RepoComponent) UpdateRepo(ctx context.Context, req types.UpdateRepoReq)
 	}
 	if req.Description != nil {
 		repo.Description = *req.Description
+	}
+
+	if req.ExternalSources != nil {
+		var sources []database.RepositoryExternalSource
+		for _, source := range req.ExternalSources {
+			sources = append(sources, database.RepositoryExternalSource{
+				Repository:   repo,
+				RepositoryID: repo.ID,
+				SourceName:   source.SourceName,
+				SourceURL:    source.SourceURL,
+			})
+		}
+		err = c.repo.UpdateExternalSources(ctx, repo.ID, sources)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update external sources: %w", err)
+		}
 	}
 
 	gitRepoReq := gitserver.UpdateRepoReq{

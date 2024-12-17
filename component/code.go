@@ -8,6 +8,7 @@ import (
 	"jingzhi-server/common/config"
 	"jingzhi-server/common/types"
 	"jingzhi-server/common/utils/common"
+	"jingzhi-server/common/utils/convert"
 )
 
 const codeGitattributesContent = modelGitattributesContent
@@ -124,9 +125,10 @@ func (c *CodeComponent) Create(ctx context.Context, req *types.CreateCodeReq) (*
 			Nickname: dbRepo.User.NickName,
 			Email:    dbRepo.User.Email,
 		},
-		Tags:      tags,
-		CreatedAt: code.CreatedAt,
-		UpdatedAt: code.UpdatedAt,
+		Tags:            tags,
+		CreatedAt:       code.CreatedAt,
+		UpdatedAt:       code.UpdatedAt,
+		ExternalSources: convert.ToExternalSources(dbRepo.ExternalSources),
 	}
 
 	return resCode, nil
@@ -175,21 +177,22 @@ func (c *CodeComponent) Index(ctx context.Context, filter *types.RepoFilter, per
 			})
 		}
 		resCodes = append(resCodes, types.Code{
-			ID:           code.ID,
-			Name:         repo.Name,
-			Nickname:     repo.Nickname,
-			Description:  repo.Description,
-			Likes:        repo.Likes,
-			Downloads:    repo.DownloadCount,
-			Path:         repo.Path,
-			RepositoryID: repo.ID,
-			Private:      repo.Private,
-			CreatedAt:    code.CreatedAt,
-			UpdatedAt:    repo.UpdatedAt,
-			Tags:         tags,
-			Source:       repo.Source,
-			SyncStatus:   repo.SyncStatus,
-			License:      repo.License,
+			ID:              code.ID,
+			Name:            repo.Name,
+			Nickname:        repo.Nickname,
+			Description:     repo.Description,
+			Likes:           repo.Likes,
+			Downloads:       repo.DownloadCount,
+			Path:            repo.Path,
+			RepositoryID:    repo.ID,
+			Private:         repo.Private,
+			CreatedAt:       code.CreatedAt,
+			UpdatedAt:       repo.UpdatedAt,
+			Tags:            tags,
+			Source:          repo.Source,
+			SyncStatus:      repo.SyncStatus,
+			License:         repo.License,
+			ExternalSources: convert.ToExternalSources(repo.ExternalSources),
 		})
 	}
 
@@ -215,17 +218,18 @@ func (c *CodeComponent) Update(ctx context.Context, req *types.UpdateCodeReq) (*
 	}
 
 	resCode := &types.Code{
-		ID:           code.ID,
-		Name:         dbRepo.Name,
-		Nickname:     dbRepo.Nickname,
-		Description:  dbRepo.Description,
-		Likes:        dbRepo.Likes,
-		Downloads:    dbRepo.DownloadCount,
-		Path:         dbRepo.Path,
-		RepositoryID: dbRepo.ID,
-		Private:      dbRepo.Private,
-		CreatedAt:    code.CreatedAt,
-		UpdatedAt:    code.UpdatedAt,
+		ID:              code.ID,
+		Name:            dbRepo.Name,
+		Nickname:        dbRepo.Nickname,
+		Description:     dbRepo.Description,
+		Likes:           dbRepo.Likes,
+		Downloads:       dbRepo.DownloadCount,
+		Path:            dbRepo.Path,
+		RepositoryID:    dbRepo.ID,
+		Private:         dbRepo.Private,
+		CreatedAt:       code.CreatedAt,
+		UpdatedAt:       code.UpdatedAt,
+		ExternalSources: convert.ToExternalSources(dbRepo.ExternalSources),
 	}
 
 	return resCode, nil
@@ -310,16 +314,17 @@ func (c *CodeComponent) Show(ctx context.Context, namespace, name, currentUser s
 			Nickname: code.Repository.User.NickName,
 			Email:    code.Repository.User.Email,
 		},
-		Private:    code.Repository.Private,
-		CreatedAt:  code.CreatedAt,
-		UpdatedAt:  code.Repository.UpdatedAt,
-		UserLikes:  likeExists,
-		Source:     code.Repository.Source,
-		SyncStatus: code.Repository.SyncStatus,
-		License:    code.Repository.License,
-		CanWrite:   permission.CanWrite,
-		CanManage:  permission.CanAdmin,
-		Namespace:  ns,
+		Private:         code.Repository.Private,
+		CreatedAt:       code.CreatedAt,
+		UpdatedAt:       code.Repository.UpdatedAt,
+		UserLikes:       likeExists,
+		Source:          code.Repository.Source,
+		SyncStatus:      code.Repository.SyncStatus,
+		License:         code.Repository.License,
+		CanWrite:        permission.CanWrite,
+		CanManage:       permission.CanAdmin,
+		Namespace:       ns,
+		ExternalSources: convert.ToExternalSources(code.Repository.ExternalSources),
 	}
 
 	return resCode, nil

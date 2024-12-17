@@ -12,6 +12,7 @@ import (
 	"jingzhi-server/common/config"
 	"jingzhi-server/common/types"
 	"jingzhi-server/common/utils/common"
+	"jingzhi-server/common/utils/convert"
 )
 
 const datasetGitattributesContent = `*.7z filter=lfs diff=lfs merge=lfs -text
@@ -228,9 +229,10 @@ func (c *DatasetComponent) Create(ctx context.Context, req *types.CreateDatasetR
 			Nickname: user.NickName,
 			Email:    user.Email,
 		},
-		Tags:      tags,
-		CreatedAt: dataset.CreatedAt,
-		UpdatedAt: dataset.UpdatedAt,
+		Tags:            tags,
+		CreatedAt:       dataset.CreatedAt,
+		UpdatedAt:       dataset.UpdatedAt,
+		ExternalSources: convert.ToExternalSources(dataset.Repository.ExternalSources),
 	}
 
 	return resDataset, nil
@@ -289,22 +291,23 @@ func (c *DatasetComponent) Index(ctx context.Context, filter *types.RepoFilter, 
 			})
 		}
 		resDatasets = append(resDatasets, types.Dataset{
-			ID:           dataset.ID,
-			Name:         repo.Name,
-			Nickname:     repo.Nickname,
-			Description:  repo.Description,
-			Likes:        repo.Likes,
-			Downloads:    repo.DownloadCount,
-			Path:         repo.Path,
-			RepositoryID: repo.ID,
-			Private:      repo.Private,
-			Tags:         tags,
-			CreatedAt:    dataset.CreatedAt,
-			UpdatedAt:    repo.UpdatedAt,
-			Source:       repo.Source,
-			SyncStatus:   repo.SyncStatus,
-			License:      repo.License,
-			Repository:   common.BuildCloneInfo(c.config, dataset.Repository),
+			ID:              dataset.ID,
+			Name:            repo.Name,
+			Nickname:        repo.Nickname,
+			Description:     repo.Description,
+			Likes:           repo.Likes,
+			Downloads:       repo.DownloadCount,
+			Path:            repo.Path,
+			RepositoryID:    repo.ID,
+			Private:         repo.Private,
+			Tags:            tags,
+			CreatedAt:       dataset.CreatedAt,
+			UpdatedAt:       repo.UpdatedAt,
+			Source:          repo.Source,
+			SyncStatus:      repo.SyncStatus,
+			License:         repo.License,
+			Repository:      common.BuildCloneInfo(c.config, dataset.Repository),
+			ExternalSources: convert.ToExternalSources(dataset.Repository.ExternalSources),
 		})
 	}
 
@@ -330,17 +333,18 @@ func (c *DatasetComponent) Update(ctx context.Context, req *types.UpdateDatasetR
 	}
 
 	resDataset := &types.Dataset{
-		ID:           dataset.ID,
-		Name:         dbRepo.Name,
-		Nickname:     dbRepo.Nickname,
-		Description:  dbRepo.Description,
-		Likes:        dbRepo.Likes,
-		Downloads:    dbRepo.DownloadCount,
-		Path:         dbRepo.Path,
-		RepositoryID: dbRepo.ID,
-		Private:      dbRepo.Private,
-		CreatedAt:    dataset.CreatedAt,
-		UpdatedAt:    dataset.UpdatedAt,
+		ID:              dataset.ID,
+		Name:            dbRepo.Name,
+		Nickname:        dbRepo.Nickname,
+		Description:     dbRepo.Description,
+		Likes:           dbRepo.Likes,
+		Downloads:       dbRepo.DownloadCount,
+		Path:            dbRepo.Path,
+		RepositoryID:    dbRepo.ID,
+		Private:         dbRepo.Private,
+		CreatedAt:       dataset.CreatedAt,
+		UpdatedAt:       dataset.UpdatedAt,
+		ExternalSources: convert.ToExternalSources(dbRepo.ExternalSources),
 	}
 
 	return resDataset, nil
@@ -425,16 +429,17 @@ func (c *DatasetComponent) Show(ctx context.Context, namespace, name, currentUse
 			Nickname: dataset.Repository.User.NickName,
 			Email:    dataset.Repository.User.Email,
 		},
-		Private:    dataset.Repository.Private,
-		CreatedAt:  dataset.CreatedAt,
-		UpdatedAt:  dataset.Repository.UpdatedAt,
-		UserLikes:  likeExists,
-		Source:     dataset.Repository.Source,
-		SyncStatus: dataset.Repository.SyncStatus,
-		License:    dataset.Repository.License,
-		CanWrite:   permission.CanWrite,
-		CanManage:  permission.CanAdmin,
-		Namespace:  ns,
+		Private:         dataset.Repository.Private,
+		CreatedAt:       dataset.CreatedAt,
+		UpdatedAt:       dataset.Repository.UpdatedAt,
+		UserLikes:       likeExists,
+		Source:          dataset.Repository.Source,
+		SyncStatus:      dataset.Repository.SyncStatus,
+		License:         dataset.Repository.License,
+		CanWrite:        permission.CanWrite,
+		CanManage:       permission.CanAdmin,
+		Namespace:       ns,
+		ExternalSources: convert.ToExternalSources(dataset.Repository.ExternalSources),
 	}
 
 	return resDataset, nil

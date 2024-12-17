@@ -9,8 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/uptrace/bun"
 	"jingzhi-server/common/types"
+
+	"github.com/uptrace/bun"
 )
 
 var RepositorySourceAndPrefixMapping = map[types.RepositorySource]string{
@@ -43,19 +44,20 @@ type Repository struct {
 	Labels  string `bun:",nullzero" json:"labels"`
 	License string `bun:",nullzero" json:"license"`
 	// Depreated
-	Readme         string                     `bun:",nullzero" json:"readme"`
-	DefaultBranch  string                     `bun:",notnull" json:"default_branch"`
-	LfsFiles       []LfsFile                  `bun:"rel:has-many,join:id=repository_id" json:"-"`
-	Likes          int64                      `bun:",nullzero" json:"likes"`
-	DownloadCount  int64                      `bun:",nullzero" json:"download_count"`
-	Downloads      []RepositoryDownload       `bun:"rel:has-many,join:id=repository_id" json:"downloads"`
-	Tags           []Tag                      `bun:"m2m:repository_tags,join:Repository=Tag" json:"tags"`
-	Mirror         Mirror                     `bun:"rel:has-one,join:id=repository_id" json:"mirror"`
-	RepositoryType types.RepositoryType       `bun:",notnull" json:"repository_type"`
-	HTTPCloneURL   string                     `bun:",nullzero" json:"http_clone_url"`
-	SSHCloneURL    string                     `bun:",nullzero" json:"ssh_clone_url"`
-	Source         types.RepositorySource     `bun:",nullzero,default:'local'" json:"source"`
-	SyncStatus     types.RepositorySyncStatus `bun:",nullzero" json:"sync_status"`
+	Readme          string                     `bun:",nullzero" json:"readme"`
+	DefaultBranch   string                     `bun:",notnull" json:"default_branch"`
+	LfsFiles        []LfsFile                  `bun:"rel:has-many,join:id=repository_id" json:"-"`
+	Likes           int64                      `bun:",nullzero" json:"likes"`
+	DownloadCount   int64                      `bun:",nullzero" json:"download_count"`
+	Downloads       []RepositoryDownload       `bun:"rel:has-many,join:id=repository_id" json:"downloads"`
+	Tags            []Tag                      `bun:"m2m:repository_tags,join:Repository=Tag" json:"tags"`
+	Mirror          Mirror                     `bun:"rel:has-one,join:id=repository_id" json:"mirror"`
+	RepositoryType  types.RepositoryType       `bun:",notnull" json:"repository_type"`
+	HTTPCloneURL    string                     `bun:",nullzero" json:"http_clone_url"`
+	SSHCloneURL     string                     `bun:",nullzero" json:"ssh_clone_url"`
+	Source          types.RepositorySource     `bun:",nullzero,default:'local'" json:"source"`
+	SyncStatus      types.RepositorySyncStatus `bun:",nullzero" json:"sync_status"`
+	ExternalSources []RepositoryExternalSource `bun:"rel:has-many,join:id=repository_id" json:"external_sources"`
 	// updated_at timestamp will be updated only if files changed
 	times
 }
@@ -121,6 +123,7 @@ func (s *RepoStore) Find(ctx context.Context, owner, repoType, repoName string) 
 	err = s.db.Operator.Core.
 		NewSelect().
 		Model(repo).
+		Relation("ExternalSources").
 		Where("LOWER(git_path) = LOWER(?)", fmt.Sprintf("%ss_%s/%s", repoType, owner, repoName)).
 		Limit(1).
 		Scan(ctx)
@@ -132,6 +135,7 @@ func (s *RepoStore) FindById(ctx context.Context, id int64) (*Repository, error)
 	err := s.db.Operator.Core.
 		NewSelect().
 		Model(resRepo).
+		Relation("ExternalSources").
 		Where("id =?", id).
 		Scan(ctx)
 	return resRepo, err
@@ -146,6 +150,7 @@ func (s *RepoStore) FindByIds(ctx context.Context, ids []int64, opts ...SelectOp
 	}
 	err := q.
 		Model(&repos).
+		Relation("ExternalSources").
 		Where("id in (?)", bun.In(ids)).
 		Scan(ctx)
 	return repos, err
@@ -156,6 +161,7 @@ func (s *RepoStore) FindByPath(ctx context.Context, repoType types.RepositoryTyp
 	err := s.db.Operator.Core.
 		NewSelect().
 		Model(resRepo).
+		Relation("ExternalSources").
 		Where("LOWER(git_path) = LOWER(?)", fmt.Sprintf("%ss_%s/%s", repoType, namespace, name)).
 		Limit(1).
 		Scan(ctx)
@@ -357,7 +363,8 @@ func (s *RepoStore) PublicToUser(ctx context.Context, repoType types.RepositoryT
 		NewSelect().
 		Column("repository.*").
 		Model(&repos).
-		Relation("Tags")
+		Relation("Tags").
+		Relation("ExternalSources")
 
 	q.Where("repository.repository_type = ?", repoType)
 
@@ -431,7 +438,8 @@ func (s *RepoStore) ListRepoPublicToUserByRepoIDs(ctx context.Context, repoType 
 		NewSelect().
 		Column("repository.*").
 		Model(&repos).
-		Relation("Tags")
+		Relation("Tags").
+		Relation("ExternalSources")
 
 	q.Where("repository.repository_type = ?", repoType)
 	q.Where("repository.private = ? or repository.user_id = ?", false, userID)
@@ -477,6 +485,7 @@ func (s *RepoStore) WithMirror(ctx context.Context, per, page int) (repos []Repo
 	q := s.db.Operator.Core.NewSelect().
 		Model(&repos).
 		Relation("Mirror").
+		Relation("ExternalSources").
 		Where("mirror.id is not null")
 	count, err = q.Count(ctx)
 	if err != nil {
@@ -629,4 +638,112 @@ func (s *RepoStore) FindWithBatch(ctx context.Context, batchSize, batch int) ([]
 		Offset(batchSize * batch).
 		Scan(ctx)
 	return res, err
+}
+
+type RepositoryExternalSource struct {
+	ID           int64       `bun:",pk,autoincrement" json:"id"`
+	RepositoryID int64       `bun:",notnull" json:"repository_id"`
+	Repository   *Repository `bun:"rel:belongs-to,join:repository_id=id"`
+	SourceName   string      `bun:",notnull" json:"source_name"`
+	SourceURL    string      `bun:",notnull" json:"source_url"`
+	CreatedAt    time.Time   `bun:",nullzero,notnull,default:current_timestamp" json:"created_at"`
+	UpdatedAt    time.Time   `bun:",nullzero,notnull,default:current_timestamp" json:"updated_at"`
+}
+
+// CreateExternalSource creates a new external source for a repository
+func (s *RepoStore) CreateExternalSource(ctx context.Context, source RepositoryExternalSource) (*RepositoryExternalSource, error) {
+	source.CreatedAt = time.Now()
+	source.UpdatedAt = time.Now()
+	_, err := s.db.Core.NewInsert().
+		Model(&source).
+		Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create external source: %w", err)
+	}
+
+	return &source, nil
+}
+
+// DeleteExternalSources deletes all external sources for a repository
+func (s *RepoStore) DeleteExternalSources(ctx context.Context, repositoryID int64) (int64, error) {
+	result, err := s.db.Core.NewDelete().
+		Model((*RepositoryExternalSource)(nil)).
+		Where("repository_id = ?", repositoryID).
+		Exec(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to delete external sources: %w", err)
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	return rowsAffected, nil
+}
+
+// GetExternalSources gets all external sources for a repository
+func (s *RepoStore) GetExternalSources(ctx context.Context, repositoryID int64) ([]RepositoryExternalSource, error) {
+	var sources []RepositoryExternalSource
+	err := s.db.Core.NewSelect().
+		Model(&sources).
+		Relation("Repository").
+		Where("repository_id = ?", repositoryID).
+		Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get external sources: %w", err)
+	}
+	return sources, nil
+}
+
+// UpdateExternalSource updates an external source
+func (s *RepoStore) UpdateExternalSource(ctx context.Context, source RepositoryExternalSource) (*RepositoryExternalSource, error) {
+	source.UpdatedAt = time.Now()
+	_, err := s.db.Core.NewUpdate().
+		Model(&source).
+		WherePK().
+		Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update external source: %w", err)
+	}
+	return &source, nil
+}
+
+// DeleteExternalSource deletes a specific external source
+func (s *RepoStore) DeleteExternalSource(ctx context.Context, id int64) error {
+	_, err := s.db.Core.NewDelete().
+		Model((*RepositoryExternalSource)(nil)).
+		Where("id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to delete external source: %w", err)
+	}
+	return nil
+}
+
+// UpdateExternalSources updates all external sources for a repository in a transaction
+func (s *RepoStore) UpdateExternalSources(ctx context.Context, repositoryID int64, sources []RepositoryExternalSource) error {
+	return s.db.RunInTx(ctx, func(ctx context.Context, tx Operator) error {
+		// Delete existing sources
+		_, err := tx.Core.NewDelete().
+			Model((*RepositoryExternalSource)(nil)).
+			Where("repository_id = ?", repositoryID).
+			Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to delete external sources: %w", err)
+		}
+
+		// Add new sources
+		if len(sources) > 0 {
+			now := time.Now()
+			for i := range sources {
+				sources[i].CreatedAt = now
+				sources[i].UpdatedAt = now
+				sources[i].RepositoryID = repositoryID
+			}
+			_, err = tx.Core.NewInsert().Model(&sources).Exec(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to create external sources: %w", err)
+			}
+		}
+		return nil
+	})
 }

@@ -28,6 +28,8 @@ type Code struct {
 func (s *CodeStore) ByRepoIDs(ctx context.Context, repoIDs []int64) (codes []Code, err error) {
 	err = s.db.Operator.Core.NewSelect().
 		Model(&codes).
+		Relation("Repository").
+		Relation("Repository.ExternalSources").
 		Where("repository_id in (?)", bun.In(repoIDs)).
 		Scan(ctx)
 
@@ -38,6 +40,8 @@ func (s *CodeStore) ByRepoID(ctx context.Context, repoID int64) (*Code, error) {
 	var code Code
 	err := s.db.Operator.Core.NewSelect().
 		Model(&code).
+		Relation("Repository").
+		Relation("Repository.ExternalSources").
 		Where("repository_id = ?", repoID).
 		Scan(ctx)
 
@@ -54,6 +58,7 @@ func (s *CodeStore) ByUsername(ctx context.Context, username string, per, page i
 		Model(&codes).
 		Relation("Repository.Tags").
 		Relation("Repository.User").
+		Relation("Repository.ExternalSources").
 		Where("repository.path like ?", fmt.Sprintf("%s/%%", username))
 
 	if onlyPublic {
@@ -80,6 +85,7 @@ func (s *CodeStore) UserLikesCodes(ctx context.Context, userID int64, per, page 
 		Model(&codes).
 		Relation("Repository.Tags").
 		Relation("Repository.User").
+		Relation("Repository.ExternalSources").
 		Where("repository.id in (select repo_id from user_likes where user_id=?)", userID)
 
 	query = query.Order("code.created_at DESC").
@@ -103,6 +109,7 @@ func (s *CodeStore) ByOrgPath(ctx context.Context, namespace string, per, page i
 		Model(&codes).
 		Relation("Repository.Tags").
 		Relation("Repository.User").
+		Relation("Repository.ExternalSources").
 		Where("repository.path like ?", fmt.Sprintf("%s/%%", namespace))
 
 	if onlyPublic {
@@ -144,6 +151,7 @@ func (s *CodeStore) FindByPath(ctx context.Context, namespace string, repoPath s
 		NewSelect().
 		Model(resCode).
 		Relation("Repository.User").
+		Relation("Repository.ExternalSources").
 		Where("repository.path =?", fmt.Sprintf("%s/%s", namespace, repoPath)).
 		Scan(ctx)
 	if err != nil {

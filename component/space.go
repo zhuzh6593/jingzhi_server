@@ -16,6 +16,7 @@ import (
 	"jingzhi-server/common/config"
 	"jingzhi-server/common/types"
 	"jingzhi-server/common/utils/common"
+	"jingzhi-server/common/utils/convert"
 )
 
 const spaceGitattributesContent = modelGitattributesContent
@@ -243,23 +244,24 @@ func (c *SpaceComponent) Show(ctx context.Context, namespace, name, currentUser 
 			Nickname: space.Repository.User.NickName,
 			Email:    space.Repository.User.Email,
 		},
-		CreatedAt:     space.CreatedAt,
-		UpdatedAt:     space.Repository.UpdatedAt,
-		Status:        status,
-		Endpoint:      endpoint,
-		Hardware:      space.Hardware,
-		RepositoryID:  space.Repository.ID,
-		UserLikes:     likeExists,
-		Sdk:           space.Sdk,
-		SdkVersion:    space.SdkVersion,
-		CoverImageUrl: space.CoverImageUrl,
-		Source:        space.Repository.Source,
-		SyncStatus:    space.Repository.SyncStatus,
-		SKU:           space.SKU,
-		SvcName:       svcName,
-		CanWrite:      permission.CanWrite,
-		CanManage:     permission.CanAdmin,
-		Namespace:     ns,
+		CreatedAt:       space.CreatedAt,
+		UpdatedAt:       space.Repository.UpdatedAt,
+		Status:          status,
+		Endpoint:        endpoint,
+		Hardware:        space.Hardware,
+		RepositoryID:    space.Repository.ID,
+		UserLikes:       likeExists,
+		Sdk:             space.Sdk,
+		SdkVersion:      space.SdkVersion,
+		CoverImageUrl:   space.CoverImageUrl,
+		Source:          space.Repository.Source,
+		SyncStatus:      space.Repository.SyncStatus,
+		SKU:             space.SKU,
+		SvcName:         svcName,
+		CanWrite:        permission.CanWrite,
+		CanManage:       permission.CanAdmin,
+		Namespace:       ns,
+		ExternalSources: convert.ToExternalSources(space.Repository.ExternalSources),
 	}
 
 	return resModel, nil

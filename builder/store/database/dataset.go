@@ -36,6 +36,7 @@ func (s *DatasetStore) ByRepoIDs(ctx context.Context, repoIDs []int64) (datasets
 	err = s.db.Operator.Core.NewSelect().
 		Model(&datasets).
 		Relation("Repository").
+		Relation("Repository.ExternalSources").
 		Where("repository_id in (?)", bun.In(repoIDs)).
 		Scan(ctx)
 
@@ -44,8 +45,10 @@ func (s *DatasetStore) ByRepoIDs(ctx context.Context, repoIDs []int64) (datasets
 
 func (s *DatasetStore) ByRepoID(ctx context.Context, repoID int64) (*Dataset, error) {
 	var dataset Dataset
-	err := s.db.Operator.Core.NewSelect().
+	err := s.db.Core.NewSelect().
 		Model(&dataset).
+		Relation("Repository").
+		Relation("Repository.ExternalSources").
 		Where("repository_id = ?", repoID).
 		Scan(ctx)
 	if err != nil {
@@ -61,6 +64,7 @@ func (s *DatasetStore) ByUsername(ctx context.Context, username string, per, pag
 		Model(&datasets).
 		Relation("Repository.Tags").
 		Relation("Repository.User").
+		Relation("Repository.ExternalSources").
 		Where("repository.path like ?", fmt.Sprintf("%s/%%", username))
 
 	if onlyPublic {
@@ -87,6 +91,7 @@ func (s *DatasetStore) UserLikesDatasets(ctx context.Context, userID int64, per,
 		Model(&datasets).
 		Relation("Repository.Tags").
 		Relation("Repository.User").
+		Relation("Repository.ExternalSources").
 		Where("repository.id in (select repo_id from user_likes where user_id=?)", userID)
 
 	query = query.Order("dataset.created_at DESC").
@@ -110,6 +115,7 @@ func (s *DatasetStore) ByOrgPath(ctx context.Context, namespace string, per, pag
 		Model(&datasets).
 		Relation("Repository.Tags").
 		Relation("Repository.User").
+		Relation("Repository.ExternalSources").
 		Where("repository.path like ?", fmt.Sprintf("%s/%%", namespace))
 
 	if onlyPublic {
@@ -151,6 +157,7 @@ func (s *DatasetStore) FindByPath(ctx context.Context, namespace string, repoPat
 		NewSelect().
 		Model(resDataset).
 		Relation("Repository.User").
+		Relation("Repository.ExternalSources").
 		Where("repository.path =?", fmt.Sprintf("%s/%s", namespace, repoPath)).
 		Scan(ctx)
 	if err != nil {
@@ -180,7 +187,8 @@ func (s *DatasetStore) ListByPath(ctx context.Context, paths []string) ([]Datase
 		NewSelect().
 		Model(&Dataset{}).
 		Relation("Repository").
-		Where("path IN (?)", bun.In(paths)).
+		Relation("Repository.ExternalSources").
+		Where("repository.path IN (?)", bun.In(paths)).
 		Scan(ctx, &datasets)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find models by path,error: %w", err)
@@ -204,6 +212,7 @@ func (s *DatasetStore) CreateIfNotExist(ctx context.Context, input Dataset) (*Da
 		Model(&input).
 		Where("repository_id = ?", input.RepositoryID).
 		Relation("Repository").
+		Relation("Repository.ExternalSources").
 		Scan(ctx)
 	if err == nil {
 		return &input, nil
